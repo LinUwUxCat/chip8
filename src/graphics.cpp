@@ -35,4 +35,15 @@ void render(SDL_Renderer* renderer){
     if (soundT) soundT--;
 }
 
+/**
+ * @brief Flips a pixel on screen.
+ * 
+ * @param x X of the pixel to flip.
+ * @param y Y of the pixel to flip.
+ * @return int 1 if the pixel was previously ON and switched to OFF, else 0
+ */
+int flipPixel(uint8_t x, uint8_t y){
+    return !(screen[x%64 + (y%32)*64] = !screen[x%64 + (y%32)*64]);
+}
+
 void FileOpener(){};

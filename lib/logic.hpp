@@ -46,58 +46,76 @@ void FDE(){
         fileLoaded = false;
         return;
     }
-    curInst = ((uint16_t)mem[PC+1] << 8) | mem[PC];
+    curInst = ((uint16_t)mem[PC] << 8) | mem[PC+1];
     PC+=2;
-
     /////////////////////
     ////////DECODE///////
     /////////////////////
     switch (curInst & 0xF000){
         case 0x0000:
             if (curInst == 0x00E0){
-                memset(screen, 0, sizeof(screen));
-                break;
+                memset(screen, 0, sizeof(screen));break;
             } else if (curInst == 0x00EE){
                 PC = stack.back();
-                stack.pop_back();
+                stack.pop_back();break;
             } else {
-                printf("Instruction %x is not known!\n", curInst);
+                printf("Instruction %x is not known!\n", curInst);break;
             }
             break;
         case 0x1000:
-            PC = 0x0FFF & curInst;
-            break;
+            PC = 0x0FFF & curInst;break;
         case 0x2000:
             stack.push_back(PC);
-            PC = 0x0FFF & curInst;
+            PC = 0x0FFF & curInst;printf("PC is now %X\n", PC);break;
         case 0x3000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0x4000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0x5000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0x6000:
-            V[(curInst & 0x0F00) >> 8] = curInst & 0x00FF;
+            V[(curInst & 0x0F00) >> 8] = curInst & 0x00FF;break;
         case 0x7000:
-            V[(curInst & 0x0F00) >> 8] += curInst & 0x00FF;
+            V[(curInst & 0x0F00) >> 8] += curInst & 0x00FF;break;
         case 0x8000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0x9000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0xA000:
-            
+            I = curInst & 0x0FFF;break;
         case 0xB000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0xC000:
-            printf("Instruction %x is not implemented!\n", curInst);
-        case 0xD000:
-
+            printf("Instruction %x is not implemented!\n", curInst);break;
+        case 0xD000: //Drawing sprites
+            {
+                uint16_t xpos = V[(curInst & 0x0F00) >> 8] % 64; // Starting position of sprites wrap
+                uint16_t ypos = V[(curInst & 0x00F0) >> 4] % 32; // But not the sprite itself
+                uint8_t curByte;
+                V[0xF] = 0;
+                for (int i = 0; i < (curInst & 0x000F); i++){
+                    curByte = mem[I+i];
+                    for (int b = 7; b>=0; b--){
+                        if (xpos >= 64)break;
+                        if ((curByte >> b)&1){
+                            if (flipPixel(xpos, ypos)){
+                                V[0xF] = 1;
+                            }
+                        }
+                        xpos++;
+                    }
+                    ypos++;
+                    if (ypos>=32)break;
+                    xpos = V[(curInst & 0x0F00) >> 8] % 64;
+                }
+                break;
+            }
         case 0xE000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         case 0xF000:
-            printf("Instruction %x is not implemented!\n", curInst);
+            printf("Instruction %x is not implemented!\n", curInst);break;
         default:
-            printf("What is your system?!\n")
+            printf("What is your system?!\n");
     }
 }
 #endif //_LOGIC_CHIP8

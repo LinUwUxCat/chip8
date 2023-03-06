@@ -26,5 +26,6 @@ extern Uint32 LastRefreshAt;
 extern Uint32 FPSLimit;
 
 void render(SDL_Renderer* renderer);
+int flipPixel(uint8_t x, uint8_t y);
 void FileOpener();
 #endif //_GRAPHICS_CHIP8

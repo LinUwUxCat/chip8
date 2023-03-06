@@ -194,6 +194,18 @@ int main(int argc, char* argv[]){
                     ImGui::MenuItem(lpsString.c_str(), NULL, false);
                     std::string fpsString = "Frames per s : " + std::to_string(FPSCurrent);
                     ImGui::MenuItem(fpsString.c_str(), NULL, false);
+                    if (ImGui::BeginMenu("Registers")){
+                        for (int r = 0; r < 16; r++)ImGui::MenuItem(std::to_string(V[r]).c_str());
+                        ImGui::EndMenu();
+                    }
+                    ImGui::MenuItem("PC", std::to_string(PC).c_str());
+                    ImGui::MenuItem("I", std::to_string(I).c_str());
+                    if (ImGui::BeginMenu("Stack")){
+                        for (int s = 0; s < stack.size(); s++){
+                            ImGui::MenuItem(std::to_string(stack[s]).c_str());
+                        }
+                         ImGui::EndMenu();
+                    }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Help")){
