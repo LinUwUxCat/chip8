@@ -85,7 +85,7 @@ void FDE(){
         case 0x9000:
             printf("Instruction %x is not implemented!\n", curInst);
         case 0xA000:
-
+            
         case 0xB000:
             printf("Instruction %x is not implemented!\n", curInst);
         case 0xC000:
