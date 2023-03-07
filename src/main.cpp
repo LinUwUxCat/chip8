@@ -4,6 +4,7 @@
 #include "graphics.hpp"
 #include "logic.hpp"
 #include <stdio.h>
+
 #include <string>
 #include <future> 
 
@@ -73,7 +74,8 @@ int main(int argc, char* argv[]){
     int SecondAdjustment = 16;
     LPSLastTime = SDL_GetTicks();
     FPSLastTime = SDL_GetTicks();
-    LastRefreshAt = SDL_GetTicks();
+    FPSLastRefreshAt = SDL_GetTicks();
+    IPSLastRefreshAt = std::chrono::high_resolution_clock::now(); //Very high value
 
     ////////////////////////////////
     ///////////MAIN LOOP////////////
@@ -83,7 +85,7 @@ int main(int argc, char* argv[]){
         //////////////////////
         ////////RENDER////////
         //////////////////////
-        if (SDL_GetTicks() - LastRefreshAt >= SecondAdjustment){
+        if (SDL_GetTicks() - FPSLastRefreshAt >= SecondAdjustment){
             //EVENT
             SDL_Event event;
             while (SDL_PollEvent(&event)){
@@ -176,8 +178,9 @@ int main(int argc, char* argv[]){
                         }
                 }
             }
-            SecondAdjustment = SecondAdjustment==16?17:16;
-            LastRefreshAt = SDL_GetTicks();
+            SecondAdjustment = SecondAdjustment==16?17:16;  //This is used so i can render at 61 fps consistently, instead of 63 (render every 16ms) or 59 (render every 17ms).
+                                                            //I prefer 61 to finding a stable 60 solution for now, because in case of small lag, it will drop to 60.
+            FPSLastRefreshAt = SDL_GetTicks();
             //IMGUI
             ImGui_ImplSDLRenderer_NewFrame();
             ImGui_ImplSDL2_NewFrame();
@@ -194,6 +197,11 @@ int main(int argc, char* argv[]){
                     ImGui::MenuItem(lpsString.c_str(), NULL, false);
                     std::string fpsString = "Frames per s : " + std::to_string(FPSCurrent);
                     ImGui::MenuItem(fpsString.c_str(), NULL, false);
+                    if (ImGui::BeginMenu("Instructions per s")){
+                        ImGui::InputInt("IPS", (int*)&IPSTarget);
+                        ImGui::MenuItem(std::to_string(IPSCurrent).c_str());
+                        ImGui::EndMenu();
+                    }
                     if (ImGui::BeginMenu("Registers")){
                         for (int r = 0; r < 16; r++)ImGui::MenuItem(std::to_string(V[r]).c_str());
                         ImGui::EndMenu();
@@ -209,7 +217,7 @@ int main(int argc, char* argv[]){
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Help")){
-                    ImGui::MenuItem("No help >:(", NULL, false);
+                    ImGui::MenuItem("No help >:(");
                     ImGui::MenuItem("About CHIP-8", NULL, &done);
                     ImGui::EndMenu();
                 }
@@ -238,17 +246,24 @@ int main(int argc, char* argv[]){
             fileLoaded = true;
         }
         
-        if (fileLoaded){
+        if (fileLoaded && (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - IPSLastRefreshAt).count()) >= 1000000/IPSTarget){
+            IPSLastRefreshAt = std::chrono::high_resolution_clock::now();
             FDE();
+            IPSInstructions++;
+            if (IPSLastTime < SDL_GetTicks() - 1000){
+                IPSLastTime = SDL_GetTicks();
+                IPSCurrent = IPSInstructions;
+                IPSInstructions=0;
+            }
         }
 
 
         //LPS
-        LPSFrames++;
+        LPSLoops++;
         if (LPSLastTime < SDL_GetTicks() - 1000){
             LPSLastTime = SDL_GetTicks();
-            LPSCurrent = LPSFrames;
-            LPSFrames = 0;
+            LPSCurrent = LPSLoops;
+            LPSLoops = 0;
         }
     }
     ImGui_ImplSDLRenderer_Shutdown();

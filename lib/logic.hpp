@@ -6,14 +6,23 @@
 ////////////////////////////////
 /////////CHIP-8 LOGIC///////////
 ////////////////////////////////
+
+// True if a rom is being executed. That doesn't mean there is nothing in memory!!
 bool fileLoaded = false;
+// Size of the rom. Useful to check whether instructions request data from the correct place
 uint16_t filesize;
+// Current instruction. Default is Clear Screen but it shouldn't matter
 uint16_t curInst = 0x00E0;
-uint16_t PC = 0x200; //Program Counter. Counts how much instructions we are in
-uint16_t I = 0; //Index register. Used to point at instructions in memory
+//Program Counter. Counts how much instructions we are in
+uint16_t PC = 0x200; 
+//Index register. Used to point at instructions in memory
+uint16_t I = 0; 
+//The stack.
 std::vector<uint16_t> stack;
-uint8_t V[15] = {0}; //registers
-uint8_t mem[4096] = { //we fill memory with the font. 
+//registers. Go from 0 to F, VF being the carry register
+uint8_t V[15] = {0}; 
+//Memory. Contains the font as its first 80 bytes, and the rom is inserted after byte 512, so there's some free space?
+uint8_t mem[4096] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -31,6 +40,7 @@ uint8_t mem[4096] = { //we fill memory with the font.
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+// Buttons. used for inputting data.
 bool B1, B2, B3, B4, B5, B6, B7, B8, B9, B0, BA, BB, BC, BD, BE, BF;
 
 /**

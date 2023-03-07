@@ -1,6 +1,7 @@
 #ifndef _GRAPHICS_CHIP8
 #define _GRAPHICS_CHIP8
 #include <SDL2/SDL.h>
+#include <chrono>
 // Some variables
 // How much to upscale the rendering. Original width and height is 64x32 (scale 1). default scale is 10
 extern int scale;
@@ -18,12 +19,16 @@ extern uint8_t soundT; //Sound timer. Works like the delay timer, but makes soun
 //FPS and LPS stuff
 extern Uint32 LPSLastTime;
 extern Uint32 LPSCurrent;
-extern Uint32 LPSFrames;
+extern Uint32 LPSLoops;
 extern Uint32 FPSLastTime;
 extern Uint32 FPSCurrent;
 extern Uint32 FPSFrames;
-extern Uint32 LastRefreshAt;
-extern Uint32 FPSLimit;
+extern Uint32 FPSLastRefreshAt;
+extern Uint32 IPSTarget;
+extern Uint32 IPSLastTime;
+extern Uint32 IPSCurrent;
+extern Uint32 IPSInstructions;
+extern std::chrono::_V2::system_clock::time_point IPSLastRefreshAt;
 
 void render(SDL_Renderer* renderer);
 int flipPixel(uint8_t x, uint8_t y);
