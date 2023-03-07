@@ -22,7 +22,9 @@ std::vector<uint16_t> stack;
 //registers. Go from 0 to F, VF being the carry register
 uint8_t V[15] = {0}; 
 //Memory. Contains the font as its first 80 bytes, and the rom is inserted after byte 512, so there's some free space?
-uint8_t mem[4096] = {
+uint8_t mem[4096] = { 0 };
+//The font.
+uint8_t font[80] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -76,7 +78,7 @@ void FDE(){
             PC = 0x0FFF & curInst;break;
         case 0x2000:
             stack.push_back(PC);
-            PC = 0x0FFF & curInst;printf("PC is now %X\n", PC);break;
+            PC = 0x0FFF & curInst;break;
         case 0x3000:
             printf("Instruction %x is not implemented!\n", curInst);break;
         case 0x4000:

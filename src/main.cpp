@@ -1,6 +1,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 #include "imgui/imgui_impl_sdlrenderer.h"
+#include "tinyfiledialogs/tinyfiledialogs.h"
 #include "graphics.hpp"
 #include "logic.hpp"
 #include <stdio.h>
@@ -12,14 +13,23 @@
  * @brief Open and loads file into memory.
  * 
  * @param filename Name of the file to open
- * @return int 0 if success, 1 if file open error, and 2 if file too big.
+ * @return int 0 if success, 1 if file open error, 2 if file too big, 3 if filename NULL or empty.
  */
 int OpenFile(const char* filename){
+    if (filename == NULL || !strcmp(filename, "")) return 3;
     FILE* f = fopen(filename, "r");
     if (f == NULL) return 1;
     int c;
     uint16_t p = 0x200;
     c = fgetc(f);
+    memset(mem,0,4096);                 // Reset the memory...
+    memset(V, 0, 15);                   // Registers...
+    memcpy(mem, font, 80);              // And copy the font.
+    memset(screen, 0, sizeof(screen));  // Reset the screen.
+    PC = 0x200;                         // Reset program counter.
+    I = 0;                              // Reset I.
+    stack.clear();                      // Reset the stack.
+
     while (c != EOF){
         //printf("%d ", c);
         if (p > 4096) return 2;
@@ -67,8 +77,15 @@ int main(int argc, char* argv[]){
     ImGui_ImplSDLRenderer_Init(renderer);
 
     ////////////////////////////////
+    ///////////IMPORTANT////////////
+    ////////////////////////////////
+    memcpy(mem, font, 80); //Copy the font to memory.
+
+
+    ////////////////////////////////
     ///////////VARIABLES////////////
     ////////////////////////////////
+
     bool done = false;
     bool hasToOpen = false;
     int SecondAdjustment = 16;
@@ -242,8 +259,17 @@ int main(int argc, char* argv[]){
         /////END OF RENDER/////
         if (hasToOpen){
             hasToOpen = false;
-            OpenFile("IBM.ch8");
-            fileLoaded = true;
+            const char *const patterns[1] = {"*.ch8"};
+            const char *fileToOpen = tinyfd_openFileDialog("Open a CHIP-8 ROM...", "", 1, patterns, "CHIP-8 ROM", 0);
+            if (!OpenFile(fileToOpen)){
+                fileLoaded = true;
+                std::string windowTitle("CHIP-8 - ");
+                windowTitle+=fileToOpen;
+                SDL_SetWindowTitle(window, windowTitle.c_str());
+            } else {
+                SDL_SetWindowTitle(window, "CHIP-8");
+                fileLoaded = false;
+            }
         }
         
         if (fileLoaded && (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - IPSLastRefreshAt).count()) >= 1000000/IPSTarget){
