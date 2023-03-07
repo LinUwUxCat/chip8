@@ -80,9 +80,9 @@ void FDE(){
             stack.push_back(PC);
             PC = 0x0FFF & curInst;break;
         case 0x3000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
+            if (V[(curInst & 0x0F00) >> 8] == (curInst & 0x00FF))PC+=2;break;
         case 0x4000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
+            if (V[(curInst & 0x0F00) >> 8] != (curInst & 0x00FF))PC+=2;break;
         case 0x5000:
             printf("Instruction %x is not implemented!\n", curInst);break;
         case 0x6000:
