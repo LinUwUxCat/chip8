@@ -1,7 +1,7 @@
 #ifndef _LOGIC_CHIP8
 #define _LOGIC_CHIP8
-#define X (curInst & 0x0F00) >> 8
-#define Y (curInst & 0x00F0) >> 4
+#define X ((curInst & 0x0F00) >> 8)
+#define Y ((curInst & 0x00F0) >> 4)
 #include <stdint.h>
 #include <vector>
 #include <bitset>
@@ -47,8 +47,16 @@ uint8_t font[80] = {
 };
 // Buttons. used for inputting data.
 std::bitset<16> B = {0};
-// False if using the instructions of the original CHIP-8 interpreter, True if using CHIP-48 or SUPER-CHIP instructions.
-bool isSuper = false;
+
+/* The following variables are quirks that may change how a program works and are due to the introduction of CHIP-48 and SUPER-CHIP.
+   They are set to true if their behavior follows the SUPER-CHIP instructions, and false if only following the original CHIP-8.      */
+
+// True if 0x8XY6 and 0x8XYE shift in place, false if they copy VY to VX then shift in place.
+bool super8 = false;
+// False if doing 0xBNNN, true if doing 0xBXNN. See case 0xB000 for more info
+bool superB = false;
+// False if I is incremented when storing/loading memory, true if it isn't.
+bool superF = true;
 /**
  * @brief Fetch, Decode, Execute
  * 
@@ -110,14 +118,14 @@ void FDE(){
                     V[0xF]=V[X]>=V[Y];
                     V[X]-=V[Y];break;
                 case 0x0006: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the right and set VF to the shifted bit.
-                    if(!isSuper)V[X]=V[Y];
+                    if(!super8)V[X]=V[Y];
                     V[0xF] = V[X]&1;
                     V[X]>>=1;break;
                 case 0x0007: //Set VX to VY - VX. The carry flag is set to 1 if the operation doesn't underflow, and 0 if it does.
                     V[0xF]=V[Y]>=V[X];
                     V[Y]-=V[X];break;
                 case 0x000E: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the left and set VF to the shifted bit.
-                    if(!isSuper)V[X]=V[Y];
+                    if(!super8)V[X]=V[Y];
                     V[0xF] = V[X]&8;
                     V[X]<<=1;break;
                 default:
@@ -128,7 +136,7 @@ void FDE(){
         case 0xA000:    //Set I to NNN
             I = curInst & 0x0FFF;break;
         case 0xB000:    //Jump to NNN + V0 if CHIP-8, jump to XNN + VX if CHIP-48 or SUPER-CHIP
-            PC = (0x0FFF & curInst) + V[isSuper?X:0];break;
+            PC = (0x0FFF & curInst) + V[superB?X:0];break;
         case 0xC000:    //Generates a random number, & NN and put it in VX
             V[X] = (rand() % 256) & (curInst & 0x00FF);break;
         case 0xD000: //Draw a sprite at position VX, VY, N tall.
@@ -178,8 +186,18 @@ void FDE(){
                     }
                 case 0x0A: //Loop until button is pressed
                     if (!B.any())PC-=2;else V[X] = B._Find_first(); break;
-                case 0x29: //
-                    break;
+                case 0x29: //Set I to character of font contained in VX. Since the font is saved from 0 to 80, we just do VX * 5.
+                    I=5*(V[X] & 0x0F);break;
+                case 0x33: //Set mem[I] to the first character of VX, mem[I+1] to the 2nd and mem[I+2] to the 3rd.
+                    mem[I]=V[X]/100;
+                    mem[I+1]=(V[X]/10)%10;
+                    mem[I+2]=V[X]%10;break;
+                case 0x55:
+                    memcpy(&mem[I], V, (X+1) * sizeof(uint8_t));
+                    if (!superF)I+=X+1;break;
+                case 0x65:
+                    memcpy(V, &mem[I], (X+1) * sizeof(uint8_t));
+                    if (!superF)I+=X+1;break;
 
             }break;
         default:        //This should never be reached, unless your computer represent hexadecimals with more than 0xF values (which doesn't make sense, but you never know)
