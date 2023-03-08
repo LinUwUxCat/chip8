@@ -121,7 +121,7 @@ void FDE(){
                     V[0xF] = V[X]&8;
                     V[X]<<=1;break;
                 default:
-                    printf("Instruction %X is not known!", curInst);break;
+                    printf("Instruction %X is not known!\n", curInst);break;
             }break;
         case 0x9000:    //Skip (PC+=2) if VX != VY
             if (V[X] != V[Y])PC+=2;break;
@@ -155,12 +155,12 @@ void FDE(){
                 break;
             }
         case 0xE000:    //Skip if key
-            if (curInst & 0x00FF == 0x9E){ //PC+=2 if the button corresponding to the value in VX is pressed.
+            if ((curInst & 0x00FF) == 0x9E){ //PC+=2 if the button corresponding to the value in VX is pressed.
                 if (B[V[X]])PC+=2;break;
-            } else if (curInst & 0x00FF == 0xA1){ //PC+=2 if the button corresponding to the value in VX is NOT pressed.
+            } else if ((curInst & 0x00FF) == 0xA1){ //PC+=2 if the button corresponding to the value in VX is NOT pressed.
                 if (!B[V[X]])PC+=2;break;
             } else {
-                printf("Instruction %X is not known!", curInst);break;
+                printf("Instruction %X is not known!\n", curInst);break;
             }
         case 0xF000:    //A few other instructions
             switch (curInst & 0x00FF){
@@ -177,7 +177,7 @@ void FDE(){
                         I+=V[X];I&=0x0FFF;break; // Here we decide to loop back I to avoid any out-of bounds access. I will check later in Spacefight 2091! if everything works correctly
                     }
                 case 0x0A: //Loop until button is pressed
-                    if (!B.any())PC-=2;else; break;
+                    if (!B.any())PC-=2;else V[X] = B._Find_first(); break;
                 case 0x29: //
                     break;
 

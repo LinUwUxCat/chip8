@@ -88,6 +88,7 @@ int main(int argc, char* argv[]){
 
     bool done = false;
     bool hasToOpen = false;
+    bool showInputs = false;
     int SecondAdjustment = 16;
     LPSLastTime = SDL_GetTicks();
     FPSLastTime = SDL_GetTicks();
@@ -231,6 +232,7 @@ int main(int argc, char* argv[]){
                         }
                          ImGui::EndMenu();
                     }
+                    ImGui::MenuItem("Inputs", NULL, &showInputs);
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Help")){
@@ -240,8 +242,9 @@ int main(int argc, char* argv[]){
                 }
                 ImGui::EndMainMenuBar();
             }
-            if (ImGui::Begin("Inputs")){
+            if (showInputs && ImGui::Begin("Inputs")){
                 ImGui::Text("%s",B.to_string().c_str());
+                ImGui::Text("%lX",B._Find_first());
                 ImGui::End();
             }
             ImGui::Render();
