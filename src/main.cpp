@@ -126,73 +126,73 @@ int main(int argc, char* argv[]){
                     case SDL_KEYDOWN:
                         switch (event.key.keysym.scancode){
                             case SDL_SCANCODE_1:
-                                B1=true;break;
+                                B=0;B[0x1]=1;break;
                             case SDL_SCANCODE_2:
-                                B2=true;break;
+                                B=0;B[0x2]=1;break;
                             case SDL_SCANCODE_3:
-                                B3=true;break;
+                                B=0;B[0x3]=true;break;
                             case SDL_SCANCODE_4:
-                                BC=true;break;
+                                B=0;B[0xC]=true;break;
                             case SDL_SCANCODE_Q:
-                                B4=true;break;
+                                B=0;B[0x4]=1;break;
                             case SDL_SCANCODE_W:
-                                B5=true;break;
+                                B=0;B[0x5]=true;break;
                             case SDL_SCANCODE_E:
-                                B6=true;break;
+                                B=0;B[0x6]=true;break;
                             case SDL_SCANCODE_R:
-                                BD=true;break;
+                                B=0;B[0xD]=true;break;
                             case SDL_SCANCODE_A:
-                                B7=true;break;
+                                B=0;B[0x7]=true;break;
                             case SDL_SCANCODE_S:
-                                B8=true;break;
+                                B=0;B[0x8]=1;break;
                             case SDL_SCANCODE_D:
-                                B9=true;break;
+                                B=0;B[0x9]=true;break;
                             case SDL_SCANCODE_F:
-                                BE=true;break;
+                                B=0;B[0xE]=true;break;
                             case SDL_SCANCODE_Z:
-                                BA=true;break;
+                                B=0;B[0xA]=true;break;
                             case SDL_SCANCODE_X:
-                                B0=true;break;
+                                B=0;B[0x0]=true;break;
                             case SDL_SCANCODE_C:
-                                BB=true;break;
+                                B=0;B[0xB]=true;break;
                             case SDL_SCANCODE_V:
-                                BF=true;break;
-                        }
+                                B=0;B[0xF]=true;break;
+                        }break;
                     case SDL_KEYUP:
                         switch (event.key.keysym.scancode){
                             case SDL_SCANCODE_1:
-                                B1=false;break;
+                                B[0x1]=false;break;
                             case SDL_SCANCODE_2:
-                                B2=false;break;
+                                B[0x2]=false;break;
                             case SDL_SCANCODE_3:
-                                B3=false;break;
+                                B[0x3]=false;break;
                             case SDL_SCANCODE_4:
-                                BC=false;break;
+                                B[0xC]=false;break;
                             case SDL_SCANCODE_Q:
-                                B4=false;break;
+                                B[0x4]=false;break;
                             case SDL_SCANCODE_W:
-                                B5=false;break;
+                                B[0x5]=false;break;
                             case SDL_SCANCODE_E:
-                                B6=false;break;
+                                B[0x6]=false;break;
                             case SDL_SCANCODE_R:
-                                BD=false;break;
+                                B[0xD]=false;break;
                             case SDL_SCANCODE_A:
-                                B7=false;break;
+                                B[0x7]=false;break;
                             case SDL_SCANCODE_S:
-                                B8=false;break;
+                                B[0x8]=false;break;
                             case SDL_SCANCODE_D:
-                                B9=false;break;
+                                B[0x9]=false;break;
                             case SDL_SCANCODE_F:
-                                BE=false;break;
+                                B[0xE]=false;break;
                             case SDL_SCANCODE_Z:
-                                BA=false;break;
+                                B[0xA]=false;break;
                             case SDL_SCANCODE_X:
-                                B0=false;break;
+                                B[0x0]=false;break;
                             case SDL_SCANCODE_C:
-                                BB=false;break;
+                                B[0xB]=false;break;
                             case SDL_SCANCODE_V:
-                                BF=false;break;
-                        }
+                                B[0xF]=false;break;
+                        }break;
                 }
             }
             SecondAdjustment = SecondAdjustment==16?17:16;  //This is used so i can render at 61 fps consistently, instead of 63 (render every 16ms) or 59 (render every 17ms).
@@ -239,6 +239,10 @@ int main(int argc, char* argv[]){
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
+            }
+            if (ImGui::Begin("Inputs")){
+                ImGui::Text("%s",B.to_string().c_str());
+                ImGui::End();
             }
             ImGui::Render();
 

@@ -1,7 +1,10 @@
 #ifndef _LOGIC_CHIP8
 #define _LOGIC_CHIP8
+#define X (curInst & 0x0F00) >> 8
+#define Y (curInst & 0x00F0) >> 4
 #include <stdint.h>
 #include <vector>
+#include <bitset>
 #include "graphics.hpp"
 ////////////////////////////////
 /////////CHIP-8 LOGIC///////////
@@ -20,7 +23,7 @@ uint16_t I = 0;
 //The stack.
 std::vector<uint16_t> stack;
 //registers. Go from 0 to F, VF being the carry register
-uint8_t V[15] = {0}; 
+uint8_t V[16] = {0}; 
 //Memory. Contains the font as its first 80 bytes, and the rom is inserted after byte 512, so there's some free space?
 uint8_t mem[4096] = { 0 };
 //The font.
@@ -43,8 +46,9 @@ uint8_t font[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 // Buttons. used for inputting data.
-bool B1, B2, B3, B4, B5, B6, B7, B8, B9, B0, BA, BB, BC, BD, BE, BF;
-
+std::bitset<16> B = {0};
+// False if using the instructions of the original CHIP-8 interpreter, True if using CHIP-48 or SUPER-CHIP instructions.
+bool isSuper = false;
 /**
  * @brief Fetch, Decode, Execute
  * 
@@ -65,44 +69,72 @@ void FDE(){
     /////////////////////
     switch (curInst & 0xF000){
         case 0x0000:
-            if (curInst == 0x00E0){
+            if (curInst == 0x00E0){ //Clear screen
                 memset(screen, 0, sizeof(screen));break;
-            } else if (curInst == 0x00EE){
+            } else if (curInst == 0x00EE){ //Return from subroutine (see 0x2000)
                 PC = stack.back();
                 stack.pop_back();break;
             } else {
                 printf("Instruction %x is not known!\n", curInst);break;
             }
             break;
-        case 0x1000:
-            PC = 0x0FFF & curInst;break;
-        case 0x2000:
-            stack.push_back(PC);
-            PC = 0x0FFF & curInst;break;
-        case 0x3000:
-            if (V[(curInst & 0x0F00) >> 8] == (curInst & 0x00FF))PC+=2;break;
-        case 0x4000:
-            if (V[(curInst & 0x0F00) >> 8] != (curInst & 0x00FF))PC+=2;break;
-        case 0x5000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        case 0x6000:
-            V[(curInst & 0x0F00) >> 8] = curInst & 0x00FF;break;
-        case 0x7000:
-            V[(curInst & 0x0F00) >> 8] += curInst & 0x00FF;break;
-        case 0x8000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        case 0x9000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        case 0xA000:
+        case 0x1000:    //Jump to NNN
+            PC = 0x0FFF & curInst;break; 
+        case 0x2000:    //Call subroutine (jump to NNN, but save PC location in the stack first.)
+            stack.push_back(PC);            
+            PC = 0x0FFF & curInst;break;    
+        case 0x3000:    //Skip (PC+=2) if VX == NN
+            if (V[X] == (curInst & 0x00FF))PC+=2;break;
+        case 0x4000:    //Skip (PC+=2) if VX != NN
+            if (V[X] != (curInst & 0x00FF))PC+=2;break;
+        case 0x5000:    //Skip (PC+=2) if VX == VY
+            if (V[X] == V[Y])PC+=2;break;
+        case 0x6000:    //Set VX to NN
+            V[X] = curInst & 0x00FF;break;
+        case 0x7000:    //Add NN to VX. Does not affect the carry flag.
+            V[X] += curInst & 0x00FF;break;
+        case 0x8000:    //Logic and arithmetic 
+            switch (curInst & 0x000F){
+                case 0x0000: //Set VX to VY
+                    V[X] = V[Y];break;
+                case 0x0001: //Set VX to VX | VY (Bitwise OR)
+                    V[X] = V[X] | V[Y];break;
+                case 0x0002: //Set VX to VX & VY (Bitwise AND)
+                    V[X] = V[X] & V[Y];break;
+                case 0x0003: //Set VX to VX ^ VY (Bitwise XOR)
+                    V[X] = V[X] ^ V[Y];break;
+                case 0x0004: //Set VX to VX + VY. Unlike 0x7000, this does affect the carry flag.
+                    if ((uint16_t)V[X] + (uint16_t)V[Y] > 0xFF)V[0xF]=1;else V[0xF]=0;
+                    V[X]+=V[Y];break;
+                case 0x0005: //Set VX to VX - VY. The carry flag is set to 1 if the operation doesn't underflow, and 0 if it does.
+                    V[0xF]=V[X]>=V[Y];
+                    V[X]-=V[Y];break;
+                case 0x0006: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the right and set VF to the shifted bit.
+                    if(!isSuper)V[X]=V[Y];
+                    V[0xF] = V[X]&1;
+                    V[X]>>=1;break;
+                case 0x0007: //Set VX to VY - VX. The carry flag is set to 1 if the operation doesn't underflow, and 0 if it does.
+                    V[0xF]=V[Y]>=V[X];
+                    V[Y]-=V[X];break;
+                case 0x000E: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the left and set VF to the shifted bit.
+                    if(!isSuper)V[X]=V[Y];
+                    V[0xF] = V[X]&8;
+                    V[X]<<=1;break;
+                default:
+                    printf("Instruction %X is not known!", curInst);break;
+            }break;
+        case 0x9000:    //Skip (PC+=2) if VX != VY
+            if (V[X] != V[Y])PC+=2;break;
+        case 0xA000:    //Set I to NNN
             I = curInst & 0x0FFF;break;
-        case 0xB000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        case 0xC000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        case 0xD000: //Drawing sprites
+        case 0xB000:    //Jump to NNN + V0 if CHIP-8, jump to XNN + VX if CHIP-48 or SUPER-CHIP
+            PC = (0x0FFF & curInst) + V[isSuper?X:0];break;
+        case 0xC000:    //Generates a random number, & NN and put it in VX
+            V[X] = (rand() % 256) & (curInst & 0x00FF);break;
+        case 0xD000: //Draw a sprite at position VX, VY, N tall.
             {
-                uint16_t xpos = V[(curInst & 0x0F00) >> 8] % 64; // Starting position of sprites wrap
-                uint16_t ypos = V[(curInst & 0x00F0) >> 4] % 32; // But not the sprite itself
+                uint16_t xpos = V[X] % 64; // Starting position of sprites wrap
+                uint16_t ypos = V[Y] % 32; // But not the sprite itself
                 uint8_t curByte;
                 V[0xF] = 0;
                 for (int i = 0; i < (curInst & 0x000F); i++){
@@ -118,15 +150,39 @@ void FDE(){
                     }
                     ypos++;
                     if (ypos>=32)break;
-                    xpos = V[(curInst & 0x0F00) >> 8] % 64;
+                    xpos = V[X] % 64;
                 }
                 break;
             }
-        case 0xE000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        case 0xF000:
-            printf("Instruction %x is not implemented!\n", curInst);break;
-        default:
+        case 0xE000:    //Skip if key
+            if (curInst & 0x00FF == 0x9E){ //PC+=2 if the button corresponding to the value in VX is pressed.
+                if (B[V[X]])PC+=2;break;
+            } else if (curInst & 0x00FF == 0xA1){ //PC+=2 if the button corresponding to the value in VX is NOT pressed.
+                if (!B[V[X]])PC+=2;break;
+            } else {
+                printf("Instruction %X is not known!", curInst);break;
+            }
+        case 0xF000:    //A few other instructions
+            switch (curInst & 0x00FF){
+                case 0x07: //Set VX to the current value of the delay timer
+                    V[X] = delayT;break;
+                case 0x15: //Set the delay timer to VX
+                    delayT = V[X];break;
+                case 0x18: //Set the sound timer to VX
+                    soundT = V[X];break;
+                case 0x1E: //Add VX to I. Will set VF to 1 if overflows. This was not the case on COSMAC VIP but it is the case on Amiga and 1 game relies on it.
+                    {
+                        uint16_t add = V[X] + I;
+                        if (add >= 0x1000)V[0xF]=1;
+                        I+=V[X];I&=0x0FFF;break; // Here we decide to loop back I to avoid any out-of bounds access. I will check later in Spacefight 2091! if everything works correctly
+                    }
+                case 0x0A: //Loop until button is pressed
+                    if (!B.any())PC-=2;else; break;
+                case 0x29: //
+                    break;
+
+            }break;
+        default:        //This should never be reached, unless your computer represent hexadecimals with more than 0xF values (which doesn't make sense, but you never know)
             printf("What is your system?!\n");
     }
 }
