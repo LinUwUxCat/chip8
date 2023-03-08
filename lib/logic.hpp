@@ -198,6 +198,8 @@ void FDE(){
                 case 0x65:
                     memcpy(V, &mem[I], (X+1) * sizeof(uint8_t));
                     if (!superF)I+=X+1;break;
+                default:
+                     printf("Instruction %X is not known!\n", curInst);break;
 
             }break;
         default:        //This should never be reached, unless your computer represent hexadecimals with more than 0xF values (which doesn't make sense, but you never know)
