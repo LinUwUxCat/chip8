@@ -112,18 +112,27 @@ void FDE(){
                 case 0x0003: //Set VX to VX ^ VY (Bitwise XOR)
                     V[X] = V[X] ^ V[Y];break;
                 case 0x0004: //Set VX to VX + VY. Unlike 0x7000, this does affect the carry flag.
-                    if ((uint16_t)V[X] + (uint16_t)V[Y] > 0xFF)V[0xF]=1;else V[0xF]=0;
-                    V[X]+=V[Y];break;
+                    {
+                        bool c = (((uint16_t)V[X] + (uint16_t)V[Y]) > 0xFF);
+                        V[X]+=V[Y];
+                        V[0xF]=c;break;
+                    }
                 case 0x0005: //Set VX to VX - VY. The carry flag is set to 1 if the operation doesn't underflow, and 0 if it does.
-                    V[0xF]=V[X]>=V[Y];
-                    V[X]-=V[Y];break;
+                    {
+                        bool c = V[X]>=V[Y];
+                        V[X]-=V[Y];
+                        V[0xF]=c;break;
+                    }
                 case 0x0006: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the right and set VF to the shifted bit.
                     if(!super8)V[X]=V[Y];
                     V[0xF] = V[X]&1;
                     V[X]>>=1;break;
                 case 0x0007: //Set VX to VY - VX. The carry flag is set to 1 if the operation doesn't underflow, and 0 if it does.
-                    V[0xF]=V[Y]>=V[X];
-                    V[Y]-=V[X];break;
+                    {
+                        bool c=V[Y]>=V[X];
+                        V[X]=V[Y]-V[X];
+                        V[0xF]=c;break;
+                    }
                 case 0x000E: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the left and set VF to the shifted bit.
                     if(!super8)V[X]=V[Y];
                     V[0xF] = V[X]&8;
