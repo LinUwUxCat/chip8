@@ -124,9 +124,12 @@ void FDE(){
                         V[0xF]=c;break;
                     }
                 case 0x0006: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the right and set VF to the shifted bit.
-                    if(!super8)V[X]=V[Y];
-                    V[0xF] = V[X]&1;
-                    V[X]>>=1;break;
+                    {
+                        if(!super8)V[X]=V[Y];
+                        bool c=V[X]&1;
+                        V[X]>>=1;
+                        V[0xF]=c;break;
+                    }
                 case 0x0007: //Set VX to VY - VX. The carry flag is set to 1 if the operation doesn't underflow, and 0 if it does.
                     {
                         bool c=V[Y]>=V[X];
@@ -134,9 +137,12 @@ void FDE(){
                         V[0xF]=c;break;
                     }
                 case 0x000E: //If not CHIP-48 or SUPER-CHIP, set VX to VY, then shift VX one bit to the left and set VF to the shifted bit.
-                    if(!super8)V[X]=V[Y];
-                    V[0xF] = V[X]&8;
-                    V[X]<<=1;break;
+                    {
+                        if(!super8)V[X]=V[Y];
+                        bool c=V[X]&8;
+                        V[X]<<=1;
+                        V[0xF]=c;break;
+                    }
                 default:
                     printf("Instruction %X is not known!\n", curInst);break;
             }break;
