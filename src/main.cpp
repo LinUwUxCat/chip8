@@ -87,12 +87,18 @@ int main(int argc, char* argv[]){
     ////////////////////////////////
 
     bool done = false;
+    bool showDebugMenu = false;
     bool hasToOpen = false;
     const char * fileToOpen = "";
+    int newScale = scale;
     bool reloadFile=false;
     bool showInputs = false;
     bool showSettingsWindow=false;
     int SecondAdjustment = 16;
+    float onColor[3]={on_color.r/255, on_color.g/255, on_color.b/255};
+    float offColor[3]={off_color.r/255, off_color.g/255, off_color.b/255};
+    bool showFps=false;
+    bool showIps=false;
     LPSLastTime = SDL_GetTicks();
     FPSLastTime = SDL_GetTicks();
     FPSLastRefreshAt = SDL_GetTicks();
@@ -107,6 +113,18 @@ int main(int argc, char* argv[]){
         ////////RENDER////////
         //////////////////////
         if (SDL_GetTicks() - FPSLastRefreshAt >= SecondAdjustment){
+            /**Graphic settings**/
+            if (newScale != scale){
+                scale = newScale;
+                SDL_SetWindowSize(window, 64*scale, 32*scale + 19);
+            }
+            on_color.r=onColor[0]*0xFF;
+            on_color.g=onColor[1]*0xFF;
+            on_color.b=onColor[2]*0xFF;
+
+            off_color.r=offColor[0]*0xFF;
+            off_color.g=offColor[1]*0xFF;
+            off_color.b=offColor[2]*0xFF;
             //EVENT
             SDL_Event event;
             while (SDL_PollEvent(&event)){
@@ -214,7 +232,7 @@ int main(int argc, char* argv[]){
                     ImGui::MenuItem("Quit", NULL, &done);
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("Debug")){
+                if (showDebugMenu && ImGui::BeginMenu("Debug")){
                     std::string lpsString = "Loops per s : " + std::to_string(LPSCurrent);
                     ImGui::MenuItem(lpsString.c_str(), NULL, false);
                     std::string fpsString = "Frames per s : " + std::to_string(FPSCurrent);
@@ -265,6 +283,17 @@ int main(int argc, char* argv[]){
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Personnalization")){
+                    ImGui::SliderInt("Scale", &newScale, 1, 100);
+                    ImGui::ColorEdit3("ON pixel color", onColor);
+                    ImGui::ColorEdit3("OFF pixel color", offColor);
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Performance")){
+                    ImGui::SliderInt("Target IPS", (int*)&IPSTarget,300, 7000, "%d instructions per second");
+                    ImGui::Checkbox("Show Ips", &showIps);
+                    ImGui::Checkbox("Show FPS", &showFps);
+                    ImGui::Checkbox("Show Inputs", &showInputs);
+                    ImGui::Checkbox("Enable debug menu", &showDebugMenu);
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

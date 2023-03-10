@@ -4,7 +4,10 @@ This is a CHIP-8 emulator with Dear ImGui setup on top of SDL for the rendering,
 ## Roadmap
 - ~~Add proper settings~~ and remove the Debug menu
 - Add a config file to save settings
+- Sound!!
 ## QnA
+### Where is the sound?
+Not implemented yet!
 ### Why won't [game] run / Why is [game] not working properly?
 Only the CHIP-8 instructions are implemented, meaning [anything specific to other versions](https://games.gulrak.net/cadmium/chip8-opcode-table.html) may not work properly.\
 If you think/know your game should run on CHIP-8, then try switching to the "CHIP-8" preset in settings.
