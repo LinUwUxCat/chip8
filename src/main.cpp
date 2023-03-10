@@ -88,7 +88,10 @@ int main(int argc, char* argv[]){
 
     bool done = false;
     bool hasToOpen = false;
+    const char * fileToOpen = "";
+    bool reloadFile=false;
     bool showInputs = false;
+    bool showSettingsWindow=false;
     int SecondAdjustment = 16;
     LPSLastTime = SDL_GetTicks();
     FPSLastTime = SDL_GetTicks();
@@ -207,6 +210,7 @@ int main(int argc, char* argv[]){
             if(ImGui::BeginMainMenuBar()){
                 if (ImGui::BeginMenu("File")){
                     ImGui::MenuItem("Open file", NULL, &hasToOpen);
+                    ImGui::MenuItem("Reload current file",NULL,&reloadFile);
                     ImGui::MenuItem("Quit", NULL, &done);
                     ImGui::EndMenu();
                 }
@@ -235,16 +239,35 @@ int main(int argc, char* argv[]){
                     ImGui::MenuItem("Inputs", NULL, &showInputs);
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("Help")){
-                    ImGui::MenuItem("No help >:(");
-                    ImGui::MenuItem("About CHIP-8", NULL, &done);
+                if (ImGui::BeginMenu("Settings")){
+                    ImGui::MenuItem("CHIP-8 settings", NULL, &showSettingsWindow);
+                    ImGui::MenuItem("About CHIP-8", NULL, &done, false);
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
             }
-            if (showInputs && ImGui::Begin("Inputs")){
+            if (showInputs && ImGui::Begin("Inputs", &showInputs, ImGuiWindowFlags_NoCollapse)){
                 ImGui::Text("%s",B.to_string().c_str());
                 ImGui::Text("%lX",B._Find_first());
+                ImGui::End();
+            }
+
+            if (showSettingsWindow && ImGui::Begin("Settings", &showSettingsWindow, ImGuiWindowFlags_NoCollapse)){
+                ImGui::BeginTabBar("Tabs");
+                if(ImGui::BeginTabItem("Interpreter Settings")){
+                    ImGui::Combo("Instruction Preset", &preset, presetStrings, 4);
+                    ImGui::BeginDisabled(preset);
+                    ImGui::Checkbox("Should 0x8XY[123] reset VF to 0", &chip8123);
+                    ImGui::Checkbox("Should 0x8XY6 and 0x8XYE shift in place", &super8);
+                    ImGui::Checkbox("Should 0xBXNN jump to XNN + VX", &superB);
+                    ImGui::Checkbox("Should I stay the same when storing or loading memory", &superF);
+                    ImGui::EndDisabled();
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Personnalization")){
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
                 ImGui::End();
             }
             ImGui::Render();
@@ -267,7 +290,20 @@ int main(int argc, char* argv[]){
         if (hasToOpen){
             hasToOpen = false;
             const char *const patterns[1] = {"*.ch8"};
-            const char *fileToOpen = tinyfd_openFileDialog("Open a CHIP-8 ROM...", "", 1, patterns, "CHIP-8 ROM", 0);
+            fileToOpen = tinyfd_openFileDialog("Open a CHIP-8 ROM...", "", 1, patterns, "CHIP-8 ROM", 0);
+            if (!OpenFile(fileToOpen)){
+                fileLoaded = true;
+                std::string windowTitle("CHIP-8 - ");
+                windowTitle+=fileToOpen;
+                SDL_SetWindowTitle(window, windowTitle.c_str());
+            } else {
+                SDL_SetWindowTitle(window, "CHIP-8");
+                fileLoaded = false;
+            }
+        }
+
+        if (reloadFile){
+            reloadFile=false;
             if (!OpenFile(fileToOpen)){
                 fileLoaded = true;
                 std::string windowTitle("CHIP-8 - ");
@@ -279,8 +315,32 @@ int main(int argc, char* argv[]){
             }
         }
         
+        
+
+        //////////////////////
+        ////////LOGIC/////////
+        //////////////////////
         if (fileLoaded && (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - IPSLastRefreshAt).count()) >= 1000000/IPSTarget){
-            IPSLastRefreshAt = std::chrono::high_resolution_clock::now();
+            IPSLastRefreshAt = std::chrono::high_resolution_clock::now();        
+            switch (preset){
+                case 0://Custom - Let the user choose
+                    break;
+                case 1: //CHIP-8
+                    chip8123=true;
+                    super8=false;
+                    superB=false;
+                    superF=false;break;
+                case 2: //SUPER-CHIP
+                    chip8123=false;
+                    super8=true;
+                    superB=true;
+                    superF=true;break;
+                    break;
+                case 3: //XO-CHIP
+                    break;
+                default: //??
+                    break;
+            }
             FDE();
             IPSInstructions++;
             if (IPSLastTime < SDL_GetTicks() - 1000){

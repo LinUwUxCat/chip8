@@ -51,6 +51,10 @@ std::bitset<16> B = {0};
 /* The following variables are quirks that may change how a program works and are due to the introduction of CHIP-48 and SUPER-CHIP.
    They are set to true if their behavior follows the SUPER-CHIP instructions, and false if only following the original CHIP-8.      */
 
+const char* presetStrings[4] = {"Custom", "CHIP-8", "SUPER-CHIP", "XO-CHIP"};
+int preset = 0; //0=custom (default), 1=CHIP-8, 2=SUPER-CHIP, 3=X0-CHIP
+// False if 0x8XY[123] don't change VF, true if they set it to 0
+bool chip8123=false;
 // True if 0x8XY6 and 0x8XYE shift in place, false if they copy VY to VX then shift in place.
 bool super8 = false;
 // False if doing 0xBNNN, true if doing 0xBXNN. See case 0xB000 for more info
@@ -106,10 +110,13 @@ void FDE(){
                 case 0x0000: //Set VX to VY
                     V[X] = V[Y];break;
                 case 0x0001: //Set VX to VX | VY (Bitwise OR)
+                    if(chip8123)V[0xF]=0;
                     V[X] = V[X] | V[Y];break;
                 case 0x0002: //Set VX to VX & VY (Bitwise AND)
+                    if(chip8123)V[0xF]=0;
                     V[X] = V[X] & V[Y];break;
                 case 0x0003: //Set VX to VX ^ VY (Bitwise XOR)
+                    if(chip8123)V[0xF]=0;
                     V[X] = V[X] ^ V[Y];break;
                 case 0x0004: //Set VX to VX + VY. Unlike 0x7000, this does affect the carry flag.
                     {
