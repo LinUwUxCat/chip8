@@ -356,17 +356,12 @@ int main(int argc, char* argv[]){
                     break;
                 case 1: //CHIP-8
                     chip8123=true;
-                    super8=false;
-                    superB=false;
-                    superF=false;break;
+                    super8=superB=superF=false;break;
                 case 2: //SUPER-CHIP
                     chip8123=false;
-                    super8=true;
-                    superB=true;
-                    superF=true;break;
-                    break;
+                    super8=superB=superF=true;break;
                 case 3: //XO-CHIP
-                    break;
+                    chip8123=super8=superB=superF=false;break;
                 default: //??
                     break;
             }

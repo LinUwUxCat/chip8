@@ -10,12 +10,16 @@ Not implemented yet!
 ### Why won't [game] run / Why is [game] not working properly?
 Only the CHIP-8 instructions are implemented, meaning [anything specific to other versions](https://games.gulrak.net/cadmium/chip8-opcode-table.html) may not work properly.\
 If you think/know your game should run on CHIP-8, then try switching to the "CHIP-8" preset in settings.
-### Why does the option for the XO-CHIP exist if it doesn't do anything?
-I have not taken the time to properly implement it yet!
+### Despite the different modes, not all tests pass on [testing rom]
+While I can't try all testing ROMs, I did try to pass what i could on the [test suite](https://github.com/Timendus/chip8-test-suite).\
+However, there are a few intentional failures on that rom: 
+- `Keypad test -> FX0A GETKEY` will say `NOT RELEASED` - See the next question. I am **not** planning to fix this.
+- `Quirks -> CHIP-8` will (with the CHIP-8 preset) pass everything except `DISP.WAIT`. I am **not** planning to fix this.
+- `Quirks -> XO-CHIP` will (with the XO-CHIP preset) pass everything except `CLIPPING`. I am planning to fix this.
 ### Why is the key input not how it was on CHIP-8 systems?
 Because i find having to release keys for them to register is very confusing as a user, so i decided to send the input whenever the key is just pressed.\
- And yes, i am aware that this results in the [test suite](https://github.com/Timendus/chip8-test-suite) saying "not released" in the keypad test.\
-  Additionally, the input system (intentionally) only supports one input at once.
+This results in the [test suite](https://github.com/Timendus/chip8-test-suite) saying "not released" in the keypad test.\
+Additionally, the input system (intentionally) only supports one input at once.
 ### Why can't i remap my keys?
 Again, this isn't implemented yet. default key placement on a QWERTY keyboard is as follows:
 ```
