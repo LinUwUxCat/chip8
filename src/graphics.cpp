@@ -1,25 +1,25 @@
 #include "graphics.hpp"
 int scale = 10;
 bool screen[2048] = {false};
-SDL_Color on_color = {0xFF, 0xFF, 0xFF, 0xFF};
-SDL_Color off_color = {0x00, 0x00, 0x00, 0xFF};
+u32 on_color = C2D_Color32(0xFF, 0xFF, 0xFF, 0xFF);
+u32 off_color = C2D_Color32(0x00, 0x00, 0x00, 0xFF);
 
 /// THESE ARE DEFINED HERE BECAUSE THEY DECREMENT AT THE SAME SPEED AS THE RENDER ///
 uint8_t delayT = 0; //Delay timer. decremented 60 times per second until it reaches 0.
 uint8_t soundT = 0; //Sound timer. Works like the delay timer, but makes sound until it reaches 0.
 
 //Counters
-Uint32 LPSLastTime=0;
-Uint32 LPSCurrent=0;
-Uint32 LPSLoops=0;
-Uint32 FPSLastTime=0;
-Uint32 FPSCurrent=0;
-Uint32 FPSFrames=0;
-Uint32 FPSLastRefreshAt=0;
-Uint32 IPSTarget=700;
-Uint32 IPSLastTime=0;
-Uint32 IPSCurrent=0;
-Uint32 IPSInstructions=0;
+uint32_t LPSLastTime=0;
+uint32_t LPSCurrent=0;
+uint32_t LPSLoops=0;
+uint32_t FPSLastTime=0;
+uint32_t FPSCurrent=0;
+uint32_t FPSFrames=0;
+uint32_t FPSLastRefreshAt=0;
+uint32_t IPSTarget=700;
+uint32_t IPSLastTime=0;
+uint32_t IPSCurrent=0;
+uint32_t IPSInstructions=0;
 std::chrono::_V2::system_clock::time_point IPSLastRefreshAt=std::chrono::high_resolution_clock::now();
 
 void flip(uint16_t x, uint16_t y){
@@ -29,12 +29,10 @@ void flip(uint16_t x, uint16_t y){
     screen[pos] = !screen[pos];
 }
 
-void render(SDL_Renderer* renderer){
+void render(){
     for(int i = 0; i < 2048 ; i++){
-        SDL_Rect rect = {i%64 * scale,i/64 * scale + 19,scale,scale};
-        SDL_Color *used = screen[i]?&on_color:&off_color;
-        SDL_SetRenderDrawColor(renderer, used->r, used->g, used->b, used->a);
-        SDL_RenderFillRect(renderer, &rect);
+        u32 used = screen[i]?on_color:off_color;
+        C2D_DrawRectSolid(i%64 * scale,i/64 * scale + 19,1,scale,scale,used);
     }
     if (delayT) delayT--;
     if (soundT) soundT--;
