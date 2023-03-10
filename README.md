@@ -1,10 +1,12 @@
-# CHIP-8
-## A CHIP-8 emulator/interpreter written in C++ with SDL2
-This is a CHIP-8 emulator with Dear ImGui setup on top of SDL for the rendering, and as such a menu is provided to customize a few things within the emulator itself.
+# 3DS-CHIP-8
+## A CHIP-8 emulator/interpreter for the Nintendo 3DS
+This is a CHIP-8 emulator/interpreter for the Nintendo 3DS, provided as a homebrew application.
 ## Roadmap
-- Add a config file to save settings
-- Sound!!
+- Redo everything
 ## QnA
+### What is this?
+This is a separate branch of the main CHIP-8 project that aims to port my interpreter to the Nintendo 3DS (because why not?)\
+However, lots have to be done in order to make it work for now. 
 ### Where is the sound?
 Not implemented yet!
 ### Why won't [game] run / Why is [game] not working properly?
@@ -20,17 +22,6 @@ However, there are a few intentional failures on that rom:
 Because i find having to release keys for them to register is very confusing as a user, so i decided to send the input whenever the key is just pressed.\
 This results in the [test suite](https://github.com/Timendus/chip8-test-suite) saying "not released" in the keypad test.\
 Additionally, the input system (intentionally) only supports one input at once.
-### Why can't i remap my keys?
-Again, this isn't implemented yet. default key placement on a QWERTY keyboard is as follows:
-```
-Keys     |  QWERTY   |  AZERTY
-1 2 3 C  |  1 2 3 4  |  & é " '
-4 5 6 D  |  Q W E R  |  A Z E R
-7 8 9 E  |  A S D F  |  Q S D F
-A 0 B F  |  Z X C V  |  W X C V
-```
-Note that this is based on key position, and not on key label, so e.g. QWERTZ and DVORAK users wouldn't have to reach across their keyboards.
+
 ## Libraries used
-[SDL2](http://libsdl.org/) by the libsdl organization\
-[Dear ImGui](https://github.com/ocornut/imgui) by ocornut\
-[tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) by vareille
+TODO fill libraries

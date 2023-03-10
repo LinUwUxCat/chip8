@@ -1,6 +1,5 @@
 #ifndef _GRAPHICS_CHIP8
 #define _GRAPHICS_CHIP8
-#include <SDL2/SDL.h>
 #include <chrono>
 // Some variables
 // How much to upscale the rendering. Original width and height is 64x32 (scale 1). default scale is 10
