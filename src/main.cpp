@@ -66,7 +66,7 @@ int main(int argc, char* argv[]){
 
     bool showDebugMenu = false;
     bool hasToOpen = true;
-    const char * fileToOpen = "";
+    const char * fileToOpen = "sdmc:/chip8-test-suite.ch8";
     bool showInputs = false;
     bool showSettingsWindow=false;
     int SecondAdjustment = 16;
@@ -84,26 +84,7 @@ int main(int argc, char* argv[]){
         //////////////////////
         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - FPSLastRefreshAt).count() >= SecondAdjustment){
             
-            //EVENT
-            hidScanInput();
-            u32 kDown = hidKeysDown();
-            if (kDown & KEY_START) break;
 
-            if (kDown & KEY_DUP){B=0;B[0x2]=1;}
-            if (kDown & KEY_DDOWN){B=0;B[0x8]=1;}
-            if (kDown & KEY_DLEFT){B=0;B[0x4]=1;}
-            if (kDown & KEY_DRIGHT){B=0;B[0x6]=1;}
-            if (kDown & KEY_L){B=0;B[0x1]=1;}
-            if (kDown & KEY_R){B=0;B[0x3]=1;}
-            if (kDown & KEY_B){B=0;B[0x5]=1;}
-            u32 kUp = hidKeysUp();
-            if (kUp & KEY_DUP)B[0x2]=0;
-            if (kUp & KEY_DDOWN)B[0x8]=0;
-            if (kUp & KEY_DLEFT)B[0x4]=0;
-            if (kUp & KEY_DRIGHT)B[0x6]=0;
-            if (kUp & KEY_L)B[0x1]=0;
-            if (kUp & KEY_R)B[0x3]=0;
-            if (kUp & KEY_B)B[0x5]=0;
             SecondAdjustment = SecondAdjustment==16?17:16;  //This is used so i can render at 61 fps consistently, instead of 63 (render every 16ms) or 59 (render every 17ms).
                                                             //I prefer 61 to finding a stable 60 solution for now, because in case of small lag, it will drop to 60.
             FPSLastRefreshAt = std::chrono::high_resolution_clock::now();
@@ -124,8 +105,9 @@ int main(int argc, char* argv[]){
         }
         /////END OF RENDER/////
         if (hasToOpen){
+            
             hasToOpen = false;
-            fileToOpen = "sdmc:/chip8-test-suite.ch8";
+            //fileToOpen = "sdmc:/chip8-test-suite.ch8";
             if (!OpenFile(fileToOpen)){
                 fileLoaded = true;
             } else {
@@ -155,6 +137,36 @@ int main(int argc, char* argv[]){
                 default: //??
                     break;
             }
+
+            //EVENT
+            hidScanInput();
+            u32 kDown = hidKeysDown();
+            if (kDown & KEY_START && kDown & KEY_SELECT) break;
+            if (kDown & KEY_START){
+                hasToOpen = true;
+                fileToOpen = "sdmc:/chip8-test-suite.ch8";
+            }
+            if (kDown & KEY_SELECT){
+                hasToOpen=true;
+                fileToOpen="sdmc:/cavern.ch8";
+            }
+
+            if (kDown & KEY_DUP){B=0;B[0x2]=1;}
+            if (kDown & KEY_DDOWN){B=0;B[0x8]=1;}
+            if (kDown & KEY_DLEFT){B=0;B[0x4]=1;}
+            if (kDown & KEY_DRIGHT){B=0;B[0x6]=1;}
+            if (kDown & KEY_L){B=0;B[0x1]=1;}
+            if (kDown & KEY_R){B=0;B[0x3]=1;}
+            if (kDown & KEY_B){B=0;B[0x5]=1;}
+            u32 kUp = hidKeysUp();
+            if (kUp & KEY_DUP)B[0x2]=0;
+            if (kUp & KEY_DDOWN)B[0x8]=0;
+            if (kUp & KEY_DLEFT)B[0x4]=0;
+            if (kUp & KEY_DRIGHT)B[0x6]=0;
+            if (kUp & KEY_L)B[0x1]=0;
+            if (kUp & KEY_R)B[0x3]=0;
+            if (kUp & KEY_B)B[0x5]=0;
+
             FDE();
             // IPSInstructions++;
             // if (IPSLastTime < SDL_GetTicks() - 1000){
