@@ -42,303 +42,97 @@ int main(int argc, char* argv[]){
     ////////////////////////////////
     ///////////RENDERING////////////
     ////////////////////////////////
+    gfxInitDefault();
+    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+    C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
+    C2D_Prepare();
+    consoleInit(GFX_BOTTOM, NULL);
 
-    SDL_Window *window;
-    SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("CHIP-8", 
-        SDL_WINDOWPOS_UNDEFINED, 
-        SDL_WINDOWPOS_UNDEFINED, 
-        64*scale, 
-        32*scale + 19, //Imgui bar height 
-        SDL_WINDOW_ALLOW_HIGHDPI
-    );
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
-    if (window == NULL){
-        printf("SDL Init error : Could not create SDL window.");
+    C3D_RenderTarget* top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
+
+    if (top == NULL){
+        printf("C3D error : can't create screen target");
         return 1;
     }
-    if (renderer == NULL){
-        printf("SDL Init error : Could not create renderer.");
-        return 1;
-    }
-
-    
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark(); //#DARKMODEFOREVER #H4ck3rm4n #Codemasterz
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer_Init(renderer);
 
     ////////////////////////////////
     ///////////IMPORTANT////////////
     ////////////////////////////////
     memcpy(mem, font, 80); //Copy the font to memory.
 
-
     ////////////////////////////////
     ///////////VARIABLES////////////
     ////////////////////////////////
 
-    bool done = false;
     bool showDebugMenu = false;
-    bool hasToOpen = false;
+    bool hasToOpen = true;
     const char * fileToOpen = "";
-    int newScale = scale;
-    bool reloadFile=false;
     bool showInputs = false;
     bool showSettingsWindow=false;
     int SecondAdjustment = 16;
-    float onColor[3]={on_color.r/255, on_color.g/255, on_color.b/255};
-    float offColor[3]={off_color.r/255, off_color.g/255, off_color.b/255};
     bool showFps=false;
     bool showIps=false;
-    LPSLastTime = SDL_GetTicks();
-    FPSLastTime = SDL_GetTicks();
-    FPSLastRefreshAt = SDL_GetTicks();
-    IPSLastRefreshAt = std::chrono::high_resolution_clock::now(); //Very high value
+    LPSLastTime = FPSLastTime = FPSLastRefreshAt = IPSLastRefreshAt = std::chrono::high_resolution_clock::now(); //Very high value
 
     ////////////////////////////////
     ///////////MAIN LOOP////////////
     ////////////////////////////////
-    while (!done){
+    while (aptMainLoop()){
 
         //////////////////////
         ////////RENDER////////
         //////////////////////
-        if (SDL_GetTicks() - FPSLastRefreshAt >= SecondAdjustment){
-            /**Graphic settings**/
-            if (newScale != scale){
-                scale = newScale;
-                SDL_SetWindowSize(window, 64*scale, 32*scale + 19);
-            }
-            on_color.r=onColor[0]*0xFF;
-            on_color.g=onColor[1]*0xFF;
-            on_color.b=onColor[2]*0xFF;
-
-            off_color.r=offColor[0]*0xFF;
-            off_color.g=offColor[1]*0xFF;
-            off_color.b=offColor[2]*0xFF;
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - FPSLastRefreshAt).count() >= SecondAdjustment){
+            
             //EVENT
-            SDL_Event event;
-            while (SDL_PollEvent(&event)){
-                ImGui_ImplSDL2_ProcessEvent(&event);
-                switch (event.type){
-                    /****************
-                     ****QUITTING****
-                     ****************/
-                    case SDL_QUIT:
-                        done=true;
-                        break;
-                    case SDL_WINDOWEVENT:
-                        if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)){
-                            done=true;
-                        }
-                        break;
-                    /******************
-                     **INPUT HANDLING**
-                     ******************/
-                    //Send help.
-                    case SDL_KEYDOWN:
-                        switch (event.key.keysym.scancode){
-                            case SDL_SCANCODE_1:
-                                B=0;B[0x1]=1;break;
-                            case SDL_SCANCODE_2:
-                                B=0;B[0x2]=1;break;
-                            case SDL_SCANCODE_3:
-                                B=0;B[0x3]=true;break;
-                            case SDL_SCANCODE_4:
-                                B=0;B[0xC]=true;break;
-                            case SDL_SCANCODE_Q:
-                                B=0;B[0x4]=1;break;
-                            case SDL_SCANCODE_W:
-                                B=0;B[0x5]=true;break;
-                            case SDL_SCANCODE_E:
-                                B=0;B[0x6]=true;break;
-                            case SDL_SCANCODE_R:
-                                B=0;B[0xD]=true;break;
-                            case SDL_SCANCODE_A:
-                                B=0;B[0x7]=true;break;
-                            case SDL_SCANCODE_S:
-                                B=0;B[0x8]=1;break;
-                            case SDL_SCANCODE_D:
-                                B=0;B[0x9]=true;break;
-                            case SDL_SCANCODE_F:
-                                B=0;B[0xE]=true;break;
-                            case SDL_SCANCODE_Z:
-                                B=0;B[0xA]=true;break;
-                            case SDL_SCANCODE_X:
-                                B=0;B[0x0]=true;break;
-                            case SDL_SCANCODE_C:
-                                B=0;B[0xB]=true;break;
-                            case SDL_SCANCODE_V:
-                                B=0;B[0xF]=true;break;
-                        }break;
-                    case SDL_KEYUP:
-                        switch (event.key.keysym.scancode){
-                            case SDL_SCANCODE_1:
-                                B[0x1]=false;break;
-                            case SDL_SCANCODE_2:
-                                B[0x2]=false;break;
-                            case SDL_SCANCODE_3:
-                                B[0x3]=false;break;
-                            case SDL_SCANCODE_4:
-                                B[0xC]=false;break;
-                            case SDL_SCANCODE_Q:
-                                B[0x4]=false;break;
-                            case SDL_SCANCODE_W:
-                                B[0x5]=false;break;
-                            case SDL_SCANCODE_E:
-                                B[0x6]=false;break;
-                            case SDL_SCANCODE_R:
-                                B[0xD]=false;break;
-                            case SDL_SCANCODE_A:
-                                B[0x7]=false;break;
-                            case SDL_SCANCODE_S:
-                                B[0x8]=false;break;
-                            case SDL_SCANCODE_D:
-                                B[0x9]=false;break;
-                            case SDL_SCANCODE_F:
-                                B[0xE]=false;break;
-                            case SDL_SCANCODE_Z:
-                                B[0xA]=false;break;
-                            case SDL_SCANCODE_X:
-                                B[0x0]=false;break;
-                            case SDL_SCANCODE_C:
-                                B[0xB]=false;break;
-                            case SDL_SCANCODE_V:
-                                B[0xF]=false;break;
-                        }break;
-                }
-            }
+            hidScanInput();
+            u32 kDown = hidKeysDown();
+            if (kDown & KEY_START) break;
+
+            if (kDown & KEY_DUP){B=0;B[0x2]=1;}
+            if (kDown & KEY_DDOWN){B=0;B[0x8]=1;}
+            if (kDown & KEY_DLEFT){B=0;B[0x4]=1;}
+            if (kDown & KEY_DRIGHT){B=0;B[0x6]=1;}
+            if (kDown & KEY_L){B=0;B[0x1]=1;}
+            if (kDown & KEY_R){B=0;B[0x3]=1;}
+            if (kDown & KEY_B){B=0;B[0x5]=1;}
+            u32 kUp = hidKeysUp();
+            if (kUp & KEY_DUP)B[0x2]=0;
+            if (kUp & KEY_DDOWN)B[0x8]=0;
+            if (kUp & KEY_DLEFT)B[0x4]=0;
+            if (kUp & KEY_DRIGHT)B[0x6]=0;
+            if (kUp & KEY_L)B[0x1]=0;
+            if (kUp & KEY_R)B[0x3]=0;
+            if (kUp & KEY_B)B[0x5]=0;
             SecondAdjustment = SecondAdjustment==16?17:16;  //This is used so i can render at 61 fps consistently, instead of 63 (render every 16ms) or 59 (render every 17ms).
                                                             //I prefer 61 to finding a stable 60 solution for now, because in case of small lag, it will drop to 60.
-            FPSLastRefreshAt = SDL_GetTicks();
-            //IMGUI
-            ImGui_ImplSDLRenderer_NewFrame();
-            ImGui_ImplSDL2_NewFrame();
-            ImGui::NewFrame();
+            FPSLastRefreshAt = std::chrono::high_resolution_clock::now();
 
-            if(ImGui::BeginMainMenuBar()){
-                if (ImGui::BeginMenu("File")){
-                    ImGui::MenuItem("Open file", NULL, &hasToOpen);
-                    ImGui::MenuItem("Reload current file",NULL,&reloadFile);
-                    ImGui::MenuItem("Quit", NULL, &done);
-                    ImGui::EndMenu();
-                }
-                if (showDebugMenu && ImGui::BeginMenu("Debug")){
-                    std::string lpsString = "Loops per s : " + std::to_string(LPSCurrent);
-                    ImGui::MenuItem(lpsString.c_str(), NULL, false);
-                    std::string fpsString = "Frames per s : " + std::to_string(FPSCurrent);
-                    ImGui::MenuItem(fpsString.c_str(), NULL, false);
-                    if (ImGui::BeginMenu("Instructions per s")){
-                        ImGui::InputInt("IPS", (int*)&IPSTarget);
-                        ImGui::MenuItem(std::to_string(IPSCurrent).c_str());
-                        ImGui::EndMenu();
-                    }
-                    if (ImGui::BeginMenu("Registers")){
-                        for (int r = 0; r < 16; r++)ImGui::MenuItem(std::to_string(V[r]).c_str());
-                        ImGui::EndMenu();
-                    }
-                    ImGui::MenuItem("PC", std::to_string(PC).c_str());
-                    ImGui::MenuItem("I", std::to_string(I).c_str());
-                    if (ImGui::BeginMenu("Stack")){
-                        for (int s = 0; s < stack.size(); s++){
-                            ImGui::MenuItem(std::to_string(stack[s]).c_str());
-                        }
-                         ImGui::EndMenu();
-                    }
-                    ImGui::MenuItem("Inputs", NULL, &showInputs);
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Settings")){
-                    ImGui::MenuItem("CHIP-8 settings", NULL, &showSettingsWindow);
-                    ImGui::MenuItem("About CHIP-8", NULL, &done, false);
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMainMenuBar();
-            }
-            if (showInputs && ImGui::Begin("Inputs", &showInputs, ImGuiWindowFlags_NoCollapse)){
-                ImGui::Text("%s",B.to_string().c_str());
-                ImGui::Text("%lX",B._Find_first());
-                ImGui::End();
-            }
-
-            if (showSettingsWindow && ImGui::Begin("Settings", &showSettingsWindow, ImGuiWindowFlags_NoCollapse)){
-                ImGui::BeginTabBar("Tabs");
-                if(ImGui::BeginTabItem("Interpreter Settings")){
-                    ImGui::Combo("Instruction Preset", &preset, presetStrings, 4);
-                    ImGui::BeginDisabled(preset);
-                    ImGui::Checkbox("Should 0x8XY[123] reset VF to 0", &chip8123);
-                    ImGui::Checkbox("Should 0x8XY6 and 0x8XYE shift in place", &super8);
-                    ImGui::Checkbox("Should 0xBXNN jump to XNN + VX", &superB);
-                    ImGui::Checkbox("Should I stay the same when storing or loading memory", &superF);
-                    ImGui::EndDisabled();
-                    ImGui::EndTabItem();
-                }
-                if(ImGui::BeginTabItem("Personnalization")){
-                    ImGui::SliderInt("Scale", &newScale, 1, 100);
-                    ImGui::ColorEdit3("ON pixel color", onColor);
-                    ImGui::ColorEdit3("OFF pixel color", offColor);
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Performance")){
-                    ImGui::SliderInt("Target IPS", (int*)&IPSTarget,300, 7000, "%d instructions per second");
-                    ImGui::Checkbox("Show Ips", &showIps);
-                    ImGui::Checkbox("Show FPS", &showFps);
-                    ImGui::Checkbox("Show Inputs", &showInputs);
-                    ImGui::Checkbox("Enable debug menu", &showDebugMenu);
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
-                ImGui::End();
-            }
-            ImGui::Render();
-
-            //SDL things
-            SDL_SetRenderDrawColor(renderer, (Uint8)0, (Uint8)0, (Uint8)0, (Uint8)255);
-            SDL_RenderClear(renderer);
-            render(renderer);
-            ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
-            SDL_RenderPresent(renderer);
-            //FPS
-            FPSFrames++;
-            if (FPSLastTime < SDL_GetTicks() - 1000){
-                FPSLastTime = SDL_GetTicks();
-                FPSCurrent = FPSFrames;
-                FPSFrames = 0;
-            }
+            //C2/3D things
+            C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+            C2D_TargetClear(top, C2D_Color32(0,0,0,0xFF));
+            C2D_SceneBegin(top);
+            render();
+            C3D_FrameEnd(0);
+            // //FPS
+            // FPSFrames++;
+            // if (FPSLastTime < SDL_GetTicks() - 1000){
+            //     FPSLastTime = SDL_GetTicks();
+            //     FPSCurrent = FPSFrames;
+            //     FPSFrames = 0;
+            // }
         }
         /////END OF RENDER/////
         if (hasToOpen){
             hasToOpen = false;
-            const char *const patterns[1] = {"*.ch8"};
-            fileToOpen = tinyfd_openFileDialog("Open a CHIP-8 ROM...", "", 1, patterns, "CHIP-8 ROM", 0);
+            fileToOpen = "sdmc:/chip8-test-suite.ch8";
             if (!OpenFile(fileToOpen)){
                 fileLoaded = true;
-                std::string windowTitle("CHIP-8 - ");
-                windowTitle+=fileToOpen;
-                SDL_SetWindowTitle(window, windowTitle.c_str());
             } else {
-                SDL_SetWindowTitle(window, "CHIP-8");
                 fileLoaded = false;
             }
         }
 
-        if (reloadFile){
-            reloadFile=false;
-            if (!OpenFile(fileToOpen)){
-                fileLoaded = true;
-                std::string windowTitle("CHIP-8 - ");
-                windowTitle+=fileToOpen;
-                SDL_SetWindowTitle(window, windowTitle.c_str());
-            } else {
-                SDL_SetWindowTitle(window, "CHIP-8");
-                fileLoaded = false;
-            }
-        }
         
         
 
@@ -362,29 +156,24 @@ int main(int argc, char* argv[]){
                     break;
             }
             FDE();
-            IPSInstructions++;
-            if (IPSLastTime < SDL_GetTicks() - 1000){
-                IPSLastTime = SDL_GetTicks();
-                IPSCurrent = IPSInstructions;
-                IPSInstructions=0;
-            }
+            // IPSInstructions++;
+            // if (IPSLastTime < SDL_GetTicks() - 1000){
+            //     IPSLastTime = SDL_GetTicks();
+            //     IPSCurrent = IPSInstructions;
+            //     IPSInstructions=0;
+            // }
         }
 
 
         //LPS
-        LPSLoops++;
-        if (LPSLastTime < SDL_GetTicks() - 1000){
-            LPSLastTime = SDL_GetTicks();
-            LPSCurrent = LPSLoops;
-            LPSLoops = 0;
-        }
+        // LPSLoops++;
+        // if (LPSLastTime < SDL_GetTicks() - 1000){
+        //     LPSLastTime = SDL_GetTicks();
+        //     LPSCurrent = LPSLoops;
+        //     LPSLoops = 0;
+        // }
     }
-    ImGui_ImplSDLRenderer_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
 
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+
     return 0;
 }
