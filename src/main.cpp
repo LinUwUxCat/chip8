@@ -5,10 +5,9 @@
 #include "graphics.hpp"
 #include "logic.hpp"
 #include <stdio.h>
-
 #include <string>
 #include <future> 
-
+#include <libconfig.h>
 /**
  * @brief Open and loads file into memory.
  * 
@@ -97,12 +96,60 @@ int main(int argc, char* argv[]){
     int SecondAdjustment = 16;
     float onColor[3]={on_color.r/255, on_color.g/255, on_color.b/255};
     float offColor[3]={off_color.r/255, off_color.g/255, off_color.b/255};
-    bool showFps=false;
-    bool showIps=false;
+    bool showFps;
+    bool showIps;
     LPSLastTime = SDL_GetTicks();
     FPSLastTime = SDL_GetTicks();
     FPSLastRefreshAt = SDL_GetTicks();
     IPSLastRefreshAt = std::chrono::high_resolution_clock::now(); //Very high value
+
+    ////////////////////////////////
+    //////////CONFIG FILE///////////
+    ////////////////////////////////
+    const char* configFile = "chip8.conf";
+    config_setting_t *root, *setting;
+    config_t readConfig;
+    config_init(&readConfig);
+    
+    if (!config_read_file(&readConfig, configFile)){
+        preset=0;
+        chip8123=false;
+        super8=false;
+        superB=false;
+        superF=true;
+        scale=10;
+        on_color = {0xFF, 0xFF, 0xFF, 0xFF};
+        off_color = {0x00, 0x00, 0x00, 0xFF};
+        IPSTarget=700;
+        showFps=false;
+        showIps=false;
+        showDebugMenu=false;   
+    } else {
+        config_lookup_int(&readConfig, "preset", &preset);
+        config_lookup_bool(&readConfig, "chip8123", (int*)&chip8123);
+        config_lookup_bool(&readConfig, "super8", (int*)&super8);
+        config_lookup_bool(&readConfig, "superB", (int*)&superB);
+        config_lookup_bool(&readConfig, "superF", (int*)&superF);
+        config_lookup_int(&readConfig, "scale", &scale);
+        long long rgb_on;
+        long long rgb_off;
+        if(config_lookup_int64(&readConfig, "on_color", &rgb_on)){
+            on_color.r=(rgb_on&0xFF0000)>>16;
+            on_color.g=(rgb_on&0x00FF00)>>8;
+            on_color.b=(rgb_on&0x0000FF);
+        }
+        if(config_lookup_int64(&readConfig, "off_color", &rgb_off)){
+            off_color.r=(rgb_on&0xFF0000)>>16;
+            off_color.g=(rgb_on&0x00FF00)>>8;
+            off_color.b=(rgb_on&0x0000FF);
+        }
+        config_lookup_int(&readConfig, "IPSTarget", (int*)&IPSTarget);
+        config_lookup_bool(&readConfig, "showFPS", (int*)&showFps);
+        config_lookup_bool(&readConfig, "showIPS", (int*)&showIps);
+        config_lookup_bool(&readConfig, "showDebugMenu", (int*)&showDebugMenu);
+    }
+    root=config_root_setting(&readConfig);
+
 
     ////////////////////////////////
     ///////////MAIN LOOP////////////
@@ -264,7 +311,7 @@ int main(int argc, char* argv[]){
                 }
                 ImGui::EndMainMenuBar();
             }
-            if (showInputs && ImGui::Begin("Inputs", &showInputs, ImGuiWindowFlags_NoCollapse)){
+            if (showInputs && ImGui::Begin("Inputs", &showInputs, ImGuiWindowFlags_NoCollapse)){ //TODO better view
                 ImGui::Text("%s",B.to_string().c_str());
                 ImGui::Text("%lX",B._Find_first());
                 ImGui::End();
@@ -289,7 +336,7 @@ int main(int argc, char* argv[]){
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("Performance")){
-                    ImGui::SliderInt("Target IPS", (int*)&IPSTarget,300, 7000, "%d instructions per second");
+                    ImGui::SliderInt("Target IPS", (int*)&IPSTarget,70, 7000, "%d instructions per second");
                     ImGui::Checkbox("Show Ips", &showIps);
                     ImGui::Checkbox("Show FPS", &showFps);
                     ImGui::Checkbox("Show Inputs", &showInputs);
@@ -299,6 +346,17 @@ int main(int argc, char* argv[]){
                 ImGui::EndTabBar();
                 ImGui::End();
             }
+
+            if (showFps || showIps){
+                ImGui::SetNextWindowSize(ImVec2(39, 23*showFps + 23*showIps));
+                ImGui::SetNextWindowPos(ImVec2(0,19));
+                if (ImGui::Begin("info", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav)){
+                    if (showFps)ImGui::Text("%d", FPSCurrent);
+                    if (showIps)ImGui::Text("%d", IPSCurrent);
+                    ImGui::End();
+                }
+            }
+
             ImGui::Render();
 
             //SDL things
@@ -383,6 +441,30 @@ int main(int argc, char* argv[]){
             LPSLoops = 0;
         }
     }
+
+
+    /////////////////////////////////
+    //////////CONFIG SAVE////////////
+    /////////////////////////////////
+    setting=config_setting_get_member(root,"preset");if(setting==NULL)setting=config_setting_add(root, "preset", CONFIG_TYPE_INT);config_setting_set_int(setting, preset);
+    setting=config_setting_get_member(root,"chip8123");if(setting==NULL)setting=config_setting_add(root, "chip8123", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, chip8123);
+    setting=config_setting_get_member(root,"super8");if(setting==NULL)setting=config_setting_add(root, "super8", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, super8);
+    setting=config_setting_get_member(root,"superB");if(setting==NULL)setting=config_setting_add(root, "superB", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, superB);
+    setting=config_setting_get_member(root,"superF");if(setting==NULL)setting=config_setting_add(root, "superF", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, superF);
+    setting=config_setting_get_member(root,"scale");if(setting==NULL)setting=config_setting_add(root, "scale", CONFIG_TYPE_INT);config_setting_set_int(setting, scale);
+    setting=config_setting_get_member(root,"on_color");if(setting==NULL)setting=config_setting_add(root, "on_color", CONFIG_TYPE_INT64);config_setting_set_int64(setting, ((long long)on_color.r)<<16 + ((long long)on_color.g)<<8 + ((long long)on_color.b));
+    setting=config_setting_get_member(root,"off_color");if(setting==NULL)setting=config_setting_add(root, "off_color", CONFIG_TYPE_INT64);config_setting_set_int64(setting, ((long long)off_color.r)<<16 + ((long long)off_color.g)<<8 + ((long long)off_color.b));
+    setting=config_setting_get_member(root,"IPSTarget");if(setting==NULL)setting=config_setting_add(root, "IPSTarget", CONFIG_TYPE_INT);config_setting_set_int(setting, IPSTarget);
+    setting=config_setting_get_member(root,"showFps");if(setting==NULL)setting=config_setting_add(root, "showFps", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showFps);
+    setting=config_setting_get_member(root,"showIps");if(setting==NULL)setting=config_setting_add(root, "showIps", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showIps);
+    setting=config_setting_get_member(root,"showDebugMenu");if(setting==NULL)setting=config_setting_add(root, "showDebugMenu", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showDebugMenu);
+
+    if(!config_write_file(&readConfig, "chip8.conf")){
+        printf("Error writing config file! Settings will not be saved.\n");
+    }
+
+    config_destroy(&readConfig);
+
     ImGui_ImplSDLRenderer_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
