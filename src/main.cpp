@@ -130,18 +130,19 @@ int main(int argc, char* argv[]){
         config_lookup_bool(&readConfig, "super8", (int*)&super8);
         config_lookup_bool(&readConfig, "superB", (int*)&superB);
         config_lookup_bool(&readConfig, "superF", (int*)&superF);
-        config_lookup_int(&readConfig, "scale", &scale);
+        config_lookup_int(&readConfig, "scale", &newScale);
         long long rgb_on;
         long long rgb_off;
         if(config_lookup_int64(&readConfig, "on_color", &rgb_on)){
-            on_color.r=(rgb_on&0xFF0000)>>16;
-            on_color.g=(rgb_on&0x00FF00)>>8;
-            on_color.b=(rgb_on&0x0000FF);
+            onColor[0]=((rgb_on&0xFF0000)>>16)/255.0f;
+            onColor[1]=((rgb_on&0x00FF00)>>8)/255.0f;
+            onColor[2]=(rgb_on&0x0000FF)/255.0f;
         }
+        printf("%f %f %f\n", onColor[0], onColor[1], onColor[2]);
         if(config_lookup_int64(&readConfig, "off_color", &rgb_off)){
-            off_color.r=(rgb_on&0xFF0000)>>16;
-            off_color.g=(rgb_on&0x00FF00)>>8;
-            off_color.b=(rgb_on&0x0000FF);
+            offColor[0]=((rgb_off&0xFF0000)>>16)/255.0f;
+            offColor[1]=((rgb_off&0x00FF00)>>8)/255.0f;
+            offColor[2]=(rgb_off&0x0000FF)/255.0f;
         }
         config_lookup_int(&readConfig, "IPSTarget", (int*)&IPSTarget);
         config_lookup_bool(&readConfig, "showFPS", (int*)&showFps);
@@ -452,8 +453,8 @@ int main(int argc, char* argv[]){
     setting=config_setting_get_member(root,"superB");if(setting==NULL)setting=config_setting_add(root, "superB", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, superB);
     setting=config_setting_get_member(root,"superF");if(setting==NULL)setting=config_setting_add(root, "superF", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, superF);
     setting=config_setting_get_member(root,"scale");if(setting==NULL)setting=config_setting_add(root, "scale", CONFIG_TYPE_INT);config_setting_set_int(setting, scale);
-    setting=config_setting_get_member(root,"on_color");if(setting==NULL)setting=config_setting_add(root, "on_color", CONFIG_TYPE_INT64);config_setting_set_int64(setting, ((long long)on_color.r)<<16 + ((long long)on_color.g)<<8 + ((long long)on_color.b));
-    setting=config_setting_get_member(root,"off_color");if(setting==NULL)setting=config_setting_add(root, "off_color", CONFIG_TYPE_INT64);config_setting_set_int64(setting, ((long long)off_color.r)<<16 + ((long long)off_color.g)<<8 + ((long long)off_color.b));
+    setting=config_setting_get_member(root,"on_color");if(setting==NULL)setting=config_setting_add(root, "on_color", CONFIG_TYPE_INT64);config_setting_set_int64(setting, (((long long)on_color.r)<<16) + (((long long)on_color.g)<<8) + ((long long)on_color.b));
+    setting=config_setting_get_member(root,"off_color");if(setting==NULL)setting=config_setting_add(root, "off_color", CONFIG_TYPE_INT64);config_setting_set_int64(setting, (((long long)off_color.r)<<16) + (((long long)off_color.g)<<8) + ((long long)off_color.b));
     setting=config_setting_get_member(root,"IPSTarget");if(setting==NULL)setting=config_setting_add(root, "IPSTarget", CONFIG_TYPE_INT);config_setting_set_int(setting, IPSTarget);
     setting=config_setting_get_member(root,"showFps");if(setting==NULL)setting=config_setting_add(root, "showFps", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showFps);
     setting=config_setting_get_member(root,"showIps");if(setting==NULL)setting=config_setting_add(root, "showIps", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showIps);
