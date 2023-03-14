@@ -2,7 +2,6 @@
 ## A CHIP-8 emulator/interpreter written in C++ with SDL2
 This is a CHIP-8 emulator with Dear ImGui setup on top of SDL for the rendering, and as such a menu is provided to customize a few things within the emulator itself.
 ## Roadmap
-- Add a config file to save settings
 - Sound!!
 ## QnA
 ### Where is the sound?
@@ -33,4 +32,5 @@ Note that this is based on key position, and not on key label, so e.g. QWERTZ an
 ## Libraries used
 [SDL2](http://libsdl.org/) by the libsdl organization\
 [Dear ImGui](https://github.com/ocornut/imgui) by ocornut\
-[tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) by vareille
+[tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) by vareille\
+[libconfig](https://github.com/hyperrealm/libconfig) by hyperrealm
