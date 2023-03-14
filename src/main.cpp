@@ -350,7 +350,6 @@ int main(int argc, char* argv[]){
 
             if (showFps || showIps){
                 ImGui::SetNextWindowSize(ImVec2(39, 23*showFps + 23*showIps));
-                ImGui::SetNextWindowPos(ImVec2(0,19));
                 if (ImGui::Begin("info", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav)){
                     if (showFps)ImGui::Text("%d", FPSCurrent);
                     if (showIps)ImGui::Text("%d", IPSCurrent);
