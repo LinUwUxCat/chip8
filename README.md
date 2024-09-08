@@ -2,7 +2,11 @@
 ## A CHIP-8 emulator/interpreter written in C++ with SDL2
 This is a CHIP-8 emulator with Dear ImGui setup on top of SDL for the rendering, and as such a menu is provided to customize a few things within the emulator itself.
 ## Roadmap
-- Sound!!
+- Upgrade to SDL3
+- Open file dialog must not pause the entire app
+- Add an option to have "normal" key system
+- Add Sound
+- Implement other CHIP-8 versions
 ## QnA
 ### Where is the sound?
 Not implemented yet!
