@@ -1,6 +1,6 @@
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_sdl2.h"
-#include "imgui/imgui_impl_sdlrenderer.h"
+#include "imgui/imgui_impl_sdl3.h"
+#include "imgui/imgui_impl_sdlrenderer3.h"
 #include "tinyfiledialogs/tinyfiledialogs.h"
 #include "graphics.hpp"
 #include "logic.hpp"
@@ -48,14 +48,12 @@ int main(int argc, char* argv[]){
 
     SDL_Window *window;
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("CHIP-8", 
-        SDL_WINDOWPOS_UNDEFINED, 
-        SDL_WINDOWPOS_UNDEFINED, 
+    window = SDL_CreateWindow("CHIP-8",  
         64*scale, 
         32*scale + 19, //Imgui bar height 
-        SDL_WINDOW_ALLOW_HIGHDPI
+        SDL_WINDOW_HIGH_PIXEL_DENSITY
     );
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
     if (window == NULL){
         printf("SDL Init error : Could not create SDL window.");
         return 1;
@@ -72,8 +70,8 @@ int main(int argc, char* argv[]){
     ImGui::StyleColorsDark(); //#DARKMODEFOREVER #H4ck3rm4n #Codemasterz
 
     // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer_Init(renderer);
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
 
     ////////////////////////////////
     ///////////IMPORTANT////////////
@@ -176,16 +174,16 @@ int main(int argc, char* argv[]){
             //EVENT
             SDL_Event event;
             while (SDL_PollEvent(&event)){
-                ImGui_ImplSDL2_ProcessEvent(&event);
+                ImGui_ImplSDL3_ProcessEvent(&event);
                 switch (event.type){
                     /****************
                      ****QUITTING****
                      ****************/
-                    case SDL_QUIT:
+                    case SDL_EVENT_QUIT:
                         done=true;
                         break;
-                    case SDL_WINDOWEVENT:
-                        if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)){
+                    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                        if (event.window.windowID == SDL_GetWindowID(window)){
                             done=true;
                         }
                         break;
@@ -193,8 +191,8 @@ int main(int argc, char* argv[]){
                      **INPUT HANDLING**
                      ******************/
                     //Send help.
-                    case SDL_KEYDOWN:
-                        switch (event.key.keysym.scancode){
+                    case SDL_EVENT_KEY_DOWN:
+                        switch (event.key.scancode){
                             case SDL_SCANCODE_1:
                                 B=0;B[0x1]=1;break;
                             case SDL_SCANCODE_2:
@@ -228,8 +226,8 @@ int main(int argc, char* argv[]){
                             case SDL_SCANCODE_V:
                                 B=0;B[0xF]=true;break;
                         }break;
-                    case SDL_KEYUP:
-                        switch (event.key.keysym.scancode){
+                    case SDL_EVENT_KEY_UP:
+                        switch (event.key.scancode){
                             case SDL_SCANCODE_1:
                                 B[0x1]=false;break;
                             case SDL_SCANCODE_2:
@@ -269,8 +267,8 @@ int main(int argc, char* argv[]){
                                                             //I prefer 61 to finding a stable 60 solution for now, because in case of small lag, it will drop to 60.
             FPSLastRefreshAt = SDL_GetTicks();
             //IMGUI
-            ImGui_ImplSDLRenderer_NewFrame();
-            ImGui_ImplSDL2_NewFrame();
+            ImGui_ImplSDLRenderer3_NewFrame();
+            ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
 
             if(ImGui::BeginMainMenuBar()){
@@ -363,7 +361,7 @@ int main(int argc, char* argv[]){
             SDL_SetRenderDrawColor(renderer, (Uint8)0, (Uint8)0, (Uint8)0, (Uint8)255);
             SDL_RenderClear(renderer);
             render(renderer);
-            ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+            ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
             SDL_RenderPresent(renderer);
             //FPS
             FPSFrames++;
@@ -465,8 +463,8 @@ int main(int argc, char* argv[]){
 
     config_destroy(&readConfig);
 
-    ImGui_ImplSDLRenderer_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
     SDL_DestroyRenderer(renderer);

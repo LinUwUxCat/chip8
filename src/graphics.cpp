@@ -31,7 +31,7 @@ void flip(uint16_t x, uint16_t y){
 
 void render(SDL_Renderer* renderer){
     for(int i = 0; i < 2048 ; i++){
-        SDL_Rect rect = {i%64 * scale,i/64 * scale + 19,scale,scale};
+        SDL_FRect rect = {i%64 * scale,i/64 * scale + 19,scale,scale};
         SDL_Color *used = screen[i]?&on_color:&off_color;
         SDL_SetRenderDrawColor(renderer, used->r, used->g, used->b, used->a);
         SDL_RenderFillRect(renderer, &rect);
