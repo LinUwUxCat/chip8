@@ -83,19 +83,24 @@ int main(int argc, char* argv[]){
     ///////////VARIABLES////////////
     ////////////////////////////////
 
-    bool done = false;
+    //// GUI VARIABLES ////
+    bool showInputs = false;
+    bool showSettingsWindow=false;
     bool showDebugMenu = false;
+    bool showFps;
+    bool showIps;
+    bool imguiShowDemoWindow = false;
+    bool imguiShowDebugWindow = false;
+
+    
+    bool done = false;
     bool hasToOpen = false;
     const char * fileToOpen = "";
     int newScale = scale;
     bool reloadFile=false;
-    bool showInputs = false;
-    bool showSettingsWindow=false;
     int SecondAdjustment = 16;
     float onColor[3]={on_color.r/255, on_color.g/255, on_color.b/255};
     float offColor[3]={off_color.r/255, off_color.g/255, off_color.b/255};
-    bool showFps;
-    bool showIps;
     LPSLastTime = SDL_GetTicks();
     FPSLastTime = SDL_GetTicks();
     FPSLastRefreshAt = SDL_GetTicks();
@@ -136,7 +141,6 @@ int main(int argc, char* argv[]){
             onColor[1]=((rgb_on&0x00FF00)>>8)/255.0f;
             onColor[2]=(rgb_on&0x0000FF)/255.0f;
         }
-        printf("%f %f %f\n", onColor[0], onColor[1], onColor[2]);
         if(config_lookup_int64(&readConfig, "off_color", &rgb_off)){
             offColor[0]=((rgb_off&0xFF0000)>>16)/255.0f;
             offColor[1]=((rgb_off&0x00FF00)>>8)/255.0f;
@@ -279,6 +283,12 @@ int main(int argc, char* argv[]){
                     ImGui::EndMenu();
                 }
                 if (showDebugMenu && ImGui::BeginMenu("Debug")){
+                    // imgui debug options
+                    ImGui::SeparatorText("ImGui Debug");
+                    ImGui::MenuItem("Show ImGui demo window", NULL, &imguiShowDemoWindow);
+                    ImGui::MenuItem("Show ImGui debug window", NULL, &imguiShowDebugWindow);
+                    // chip8 debug options
+                    ImGui::SeparatorText("CHIP-8 Debug");
                     std::string lpsString = "Loops per s : " + std::to_string(LPSCurrent);
                     ImGui::MenuItem(lpsString.c_str(), NULL, false);
                     std::string fpsString = "Frames per s : " + std::to_string(FPSCurrent);
@@ -354,6 +364,10 @@ int main(int argc, char* argv[]){
                     ImGui::End();
                 }
             }
+
+            if (imguiShowDemoWindow)ImGui::ShowDemoWindow(&imguiShowDemoWindow);
+            if (imguiShowDebugWindow)ImGui::ShowMetricsWindow(&imguiShowDebugWindow);
+            
 
             ImGui::Render();
 
