@@ -1,8 +1,8 @@
 # CHIP-8
-## A CHIP-8 emulator/interpreter written in C++ with SDL2
+## A CHIP-8 emulator/interpreter written in C++ with SDL3
 This is a CHIP-8 emulator with Dear ImGui setup on top of SDL for the rendering, and as such a menu is provided to customize a few things within the emulator itself.
 ## Roadmap
-- Upgrade to SDL3
+- ~~Upgrade to SDL3~~
 - Open file dialog must not pause the entire app
 - Add an option to have "normal" key system
 - Add Sound
@@ -34,7 +34,7 @@ A 0 B F  |  Z X C V  |  W X C V
 ```
 Note that this is based on key position, and not on key label, so e.g. QWERTZ and DVORAK users wouldn't have to reach across their keyboards.
 ## Libraries used
-[SDL2](http://libsdl.org/) by the libsdl organization\
+[SDL3](http://libsdl.org/) by the libsdl organization\
 [Dear ImGui](https://github.com/ocornut/imgui) by ocornut\
 [tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/) by vareille\
 [libconfig](https://github.com/hyperrealm/libconfig) by hyperrealm
