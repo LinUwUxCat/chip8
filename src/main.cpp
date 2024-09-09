@@ -131,7 +131,7 @@ int main(int argc, char* argv[]){
     SDL_Init(SDL_INIT_VIDEO);
     
 #ifdef __linux__
-    if (bypassCompositor) (SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+    if (!bypassCompositor) SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 #endif //__linux__
 
     window = SDL_CreateWindow("CHIP-8",  
