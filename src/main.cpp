@@ -43,43 +43,6 @@ int OpenFile(const char* filename){
 int main(int argc, char* argv[]){
     
     ////////////////////////////////
-    ///////////RENDERING////////////
-    ////////////////////////////////
-
-    SDL_Window *window;
-    SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("CHIP-8",  
-        64*scale, 
-        32*scale + 19, //Imgui bar height 
-        SDL_WINDOW_HIGH_PIXEL_DENSITY
-    );
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
-    if (window == NULL){
-        printf("SDL Init error : Could not create SDL window.");
-        return 1;
-    }
-    if (renderer == NULL){
-        printf("SDL Init error : Could not create renderer.");
-        return 1;
-    }
-
-    
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark(); //#DARKMODEFOREVER #H4ck3rm4n #Codemasterz
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer3_Init(renderer);
-
-    ////////////////////////////////
-    ///////////IMPORTANT////////////
-    ////////////////////////////////
-    memcpy(mem, font, 80); //Copy the font to memory.
-
-
-    ////////////////////////////////
     ///////////VARIABLES////////////
     ////////////////////////////////
 
@@ -92,7 +55,7 @@ int main(int argc, char* argv[]){
     bool imguiShowDemoWindow = false;
     bool imguiShowDebugWindow = false;
 
-    
+    //// PROGRAM VARIABLES ////
     bool done = false;
     bool hasToOpen = false;
     const char * fileToOpen = "";
@@ -105,6 +68,7 @@ int main(int argc, char* argv[]){
     FPSLastTime = SDL_GetTicks();
     FPSLastRefreshAt = SDL_GetTicks();
     IPSLastRefreshAt = std::chrono::high_resolution_clock::now(); //Very high value
+    bool bypassCompositor = false;
 
     ////////////////////////////////
     //////////CONFIG FILE///////////
@@ -127,13 +91,15 @@ int main(int argc, char* argv[]){
         showFps=false;
         showIps=false;
         showDebugMenu=false;   
+        bypassCompositor = false;
     } else {
         config_lookup_int(&readConfig, "preset", &preset);
         config_lookup_bool(&readConfig, "chip8123", (int*)&chip8123);
         config_lookup_bool(&readConfig, "super8", (int*)&super8);
         config_lookup_bool(&readConfig, "superB", (int*)&superB);
         config_lookup_bool(&readConfig, "superF", (int*)&superF);
-        config_lookup_int(&readConfig, "scale", &newScale);
+        config_lookup_int(&readConfig, "scale", &scale);
+        if (scale < 4) scale = 4;
         long long rgb_on;
         long long rgb_off;
         if(config_lookup_int64(&readConfig, "on_color", &rgb_on)){
@@ -146,13 +112,54 @@ int main(int argc, char* argv[]){
             offColor[1]=((rgb_off&0x00FF00)>>8)/255.0f;
             offColor[2]=(rgb_off&0x0000FF)/255.0f;
         }
+        
         config_lookup_int(&readConfig, "IPSTarget", (int*)&IPSTarget);
         config_lookup_bool(&readConfig, "showFPS", (int*)&showFps);
         config_lookup_bool(&readConfig, "showIPS", (int*)&showIps);
         config_lookup_bool(&readConfig, "showDebugMenu", (int*)&showDebugMenu);
+        config_lookup_bool(&readConfig, "bypassCompositor", (int*)&bypassCompositor); // For some reason this resets newScale to 0
+        newScale = scale;
     }
     root=config_root_setting(&readConfig);
 
+
+    ////////////////////////////////
+    ///////////RENDERING////////////
+    ////////////////////////////////
+
+    SDL_Window *window;
+    SDL_Init(SDL_INIT_VIDEO);
+    
+#ifdef __linux__
+    if (bypassCompositor) (SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+#endif //__linux__
+
+    window = SDL_CreateWindow("CHIP-8",  
+        64*scale, 
+        32*scale + 19, //Imgui bar height 
+        SDL_WINDOW_HIGH_PIXEL_DENSITY
+    );
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+    if (window == NULL){
+        printf("SDL Init error : Could not create SDL window.");
+        return 1;
+    }
+    if (renderer == NULL){
+        printf("SDL Init error : Could not create renderer.");
+        return 1;
+    }
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark(); //#DARKMODEFOREVER #H4ck3rm4n #Codemasterz
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
+
+    ////////////////////////////////
+    ///////////IMPORTANT////////////
+    ////////////////////////////////
+    memcpy(mem, font, 80); //Copy the font to memory.
 
     ////////////////////////////////
     ///////////MAIN LOOP////////////
@@ -165,8 +172,10 @@ int main(int argc, char* argv[]){
         if (SDL_GetTicks() - FPSLastRefreshAt >= SecondAdjustment){
             /**Graphic settings**/
             if (newScale != scale){
+                printf("shjhjkhjkcale %d new %d\n", scale, newScale);
                 scale = newScale;
                 SDL_SetWindowSize(window, 64*scale, 32*scale + 19);
+                printf("qsdqsdscale %d new %d\n", scale, newScale);
             }
             on_color.r=onColor[0]*0xFF;
             on_color.g=onColor[1]*0xFF;
@@ -339,7 +348,7 @@ int main(int argc, char* argv[]){
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Personnalization")){
-                    ImGui::SliderInt("Scale", &newScale, 1, 100);
+                    ImGui::SliderInt("Scale", &newScale, 4, 100);
                     ImGui::ColorEdit3("ON pixel color", onColor);
                     ImGui::ColorEdit3("OFF pixel color", offColor);
                     ImGui::EndTabItem();
@@ -349,6 +358,14 @@ int main(int argc, char* argv[]){
                     ImGui::Checkbox("Show Ips", &showIps);
                     ImGui::Checkbox("Show FPS", &showFps);
                     ImGui::Checkbox("Show Inputs", &showInputs);
+#ifdef __linux__
+                    ImGui::Checkbox("Bypass Compositor", &bypassCompositor);
+                    if (ImGui::IsItemHovered()){
+                        ImGui::BeginTooltip();
+                        ImGui::Text("Restart needed");
+                        ImGui::EndTooltip();
+                    }
+#endif //__linux__
                     ImGui::Checkbox("Enable debug menu", &showDebugMenu);
                     ImGui::EndTabItem();
                 }
@@ -470,6 +487,7 @@ int main(int argc, char* argv[]){
     setting=config_setting_get_member(root,"showFps");if(setting==NULL)setting=config_setting_add(root, "showFps", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showFps);
     setting=config_setting_get_member(root,"showIps");if(setting==NULL)setting=config_setting_add(root, "showIps", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showIps);
     setting=config_setting_get_member(root,"showDebugMenu");if(setting==NULL)setting=config_setting_add(root, "showDebugMenu", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, showDebugMenu);
+    setting=config_setting_get_member(root,"bypassCompositor");if(setting==NULL)setting=config_setting_add(root, "bypassCompositor", CONFIG_TYPE_BOOL);config_setting_set_bool(setting, bypassCompositor);
 
     if(!config_write_file(&readConfig, "chip8.conf")){
         printf("Error writing config file! Settings will not be saved.\n");
